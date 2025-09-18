@@ -1,0 +1,53 @@
+{
+  "environments": {
+    "dev": {
+      "frontend": {
+        "customDomain": {
+          "domainName": "dev.group-chat-ai.com",
+          "certificateArn": "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
+        }
+      },
+      "backend": {
+        "scaling": {
+          "minCapacity": 1,
+          "maxCapacity": 5
+        },
+        "environment": {
+          "DEBUG": "true",
+          "LOG_LEVEL": "debug"
+        }
+      }
+    },
+    "staging": {
+      "frontend": {
+        "customDomain": {
+          "domainName": "staging.group-chat-ai.com",
+          "certificateArn": "arn:aws:acm:us-east-1:123456789012:certificate/87654321-4321-4321-4321-210987654321"
+        }
+      },
+      "backend": {
+        "scaling": {
+          "minCapacity": 1,
+          "maxCapacity": 10
+        }
+      }
+    },
+    "prod": {
+      "frontend": {
+        "customDomain": {
+          "domainName": "app.group-chat-ai.com",
+          "certificateArn": "arn:aws:acm:us-east-1:123456789012:certificate/abcdef12-3456-7890-abcd-ef1234567890"
+        }
+      },
+      "backend": {
+        "scaling": {
+          "minCapacity": 2,
+          "maxCapacity": 20
+        },
+        "environment": {
+          "LOG_LEVEL": "warn"
+        }
+      }
+    }
+  }
+}

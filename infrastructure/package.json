@@ -1,0 +1,36 @@
+{
+  "name": "@group-chat-ai/infrastructure",
+  "version": "1.0.0",
+  "description": "AWS CDK infrastructure for Group Chat AI",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "npx tsc",
+    "watch": "npx tsc -w",
+    "test": "jest",
+    "cdk": "cdk",
+    "deploy": "cdk deploy --all",
+    "deploy:dev": "DEPLOY_ENV=dev cdk deploy GroupChatAIDev GroupChatAIFrontendDev",
+    "deploy:staging": "DEPLOY_ENV=staging cdk deploy GroupChatAIStaging GroupChatAIFrontendStaging",
+    "deploy:prod": "DEPLOY_ENV=prod cdk deploy GroupChatAIProd GroupChatAIFrontendProd",
+    "deploy:backend-only": "cdk deploy GroupChatAIDev",
+    "deploy:frontend-only": "cdk deploy GroupChatAIFrontendDev",
+    "deploy:pipeline": "cdk deploy GroupChatAIPipeline",
+    "destroy": "cdk destroy --all",
+    "destroy:dev": "cdk destroy GroupChatAIFrontendDev GroupChatAIDev",
+    "destroy:staging": "cdk destroy GroupChatAIFrontendStaging GroupChatAIStaging",
+    "destroy:prod": "cdk destroy GroupChatAIFrontendProd GroupChatAIProd",
+    "diff": "cdk diff",
+    "diff:dev": "cdk diff GroupChatAIDev GroupChatAIFrontendDev",
+    "diff:staging": "cdk diff GroupChatAIStaging GroupChatAIFrontendStaging",
+    "diff:prod": "cdk diff GroupChatAIProd GroupChatAIFrontendProd",
+    "synth": "cdk synth"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.202.0",
+    "cdk-nag": "2.37.12",
+    "constructs": "^10.0.5"
+  },
+  "devDependencies": {
+    "aws-cdk": "2.1019.2"
+  }
+}

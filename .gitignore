@@ -1,0 +1,20 @@
+node_modules
+**/dist/*
+**/cdk.out/*
+**/*.d.ts
+**/*.js
+*.tsbuildinfo
+cdk.context.json
+
+# Configuration files (may contain sensitive data)
+infrastructure/bin/config.json
+!frontend/eslint.config.js
+.venv/
+frontend/public/config.json
+.clinerules/*
+.claude/*
+memory-bank/
+SampleThreatModel.tc.json
+!eslint.config.js
+config.backup.json
+.vscode/

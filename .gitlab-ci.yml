@@ -1,0 +1,16 @@
+# Copyright 2025 Amazon.com, Inc. or its affiliates.
+# SPDX-License-Identifier: MIT-0
+
+stages: ['test']
+
+include:
+  - component: $CI_SERVER_FQDN/aws-sample-works/amazon-repolinter-ci/repolinter@v0.0.8
+    inputs: 
+      stage: test
+
+test:
+  stage: test
+  rules:
+    - if: $CI_COMMIT_BRANCH
+  script:
+    - echo "Running Repo Linter"

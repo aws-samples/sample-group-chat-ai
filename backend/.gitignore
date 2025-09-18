@@ -1,0 +1,48 @@
+# Test Coverage
+coverage/
+*.lcov
+
+# Test Results
+test-results/
+junit.xml
+
+# Environment variables
+.env
+.env.local
+.env.test
+
+# Build outputs
+dist/
+build/
+
+# Dependencies
+node_modules/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+
+# Runtime files
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache

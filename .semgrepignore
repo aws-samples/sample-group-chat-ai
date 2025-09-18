@@ -1,0 +1,8 @@
+# Copyright 2025 Amazon.com, Inc. or its affiliates.
+# SPDX-License-Identifier: MIT-0
+
+# Ignore scripts to generate files 
+frontend/scripts/*
+
+# Disable built-in semgrep rules that conflict with our translation approach
+r/javascript.react.react-i18next.i18next-key-format

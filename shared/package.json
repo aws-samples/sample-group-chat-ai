@@ -1,0 +1,34 @@
+{
+  "name": "@group-chat-ai/shared",
+  "version": "1.0.0",
+  "description": "Shared types and utilities for Group Chat AI",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./personas": {
+      "require": "./dist/personas/index.js",
+      "import": "./dist/personas/index.js",
+      "types": "./dist/personas/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "npx tsc",
+    "dev": "npx tsc --watch",
+    "test": "jest",
+    "lint": "eslint src/**/*.ts",
+    "clean": "rm -rf dist"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {},
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

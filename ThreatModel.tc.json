@@ -1,0 +1,481 @@
+{
+  "schema": 1,
+  "applicationInfo": {
+    "name": "Group Chat AI",
+    "description": "This is a real-time conversational AI platform enabling users to practice presentations with multiple AI personas. Features include WebSocket communication, voice synthesis, image uploads, custom persona creation, and AWS Bedrock integration for LLM processing."
+  },
+  "architecture": {
+    "image": "",
+    "description": "**Group Chat Architecture Overview:**\n\n1. **Frontend Layer**: React application served via Amazon CloudFront with S3 static hosting, supporting real-time WebSocket connections and image uploads\n2. **Authentication**: Amazon Cognito User Pool with OAuth 2.0/OIDC for secure user management\n3. **Network Security**: VPC architecture with ALB restricted to CloudFront IP ranges, private subnets for backend services\n4. **Backend Services**: ECS Fargate hosting Express.js server with WebSocket support, ConversationOrchestrator, PersonaManager, and SessionService\n5. **AI Integration**: Amazon Bedrock for LLM processing (Claude models), AWS Polly for voice synthesis with persona-specific voices\n6. **Configuration**: Parameter Store for centralized configuration, CloudWatch for comprehensive monitoring and logging"
+  },
+  "dataflow": {
+    "image": "",
+    "description": "#### Entities:\n\n| Entity | Description |\n|-|-|\n| User | Individual practicing presentations with AI personas |\n| React Frontend | Web application with real-time chat and voice capabilities |\n| CloudFront | CDN serving frontend and proxying API/WebSocket requests |\n| Amazon Cognito | User authentication and session management |\n| ALB | Application Load Balancer with CloudFront IP restrictions |\n| ECS Backend | Express.js server with WebSocket and AI orchestration |\n| Amazon Bedrock | LLM service for AI persona responses |\n| Amazon Polly | Text-to-speech service for voice synthesis |\n| Parameter Store | Configuration management service |\n\n#### Data flows:\n\n| Flow ID | Description | Source | Target | Assets |\n|-|-|-|-|-|\n| DF1 | User authentication flow | User | Amazon Cognito | User credentials, JWT tokens |\n| DF2 | Frontend application access | User | CloudFront | HTTP requests, static assets |\n| DF3 | Real-time communication | User | ECS Backend | WebSocket connections, chat messages |\n| DF4 | API request routing | CloudFront | ALB | Authenticated API requests |\n| DF5 | AI conversation processing | ECS Backend | Amazon Bedrock | User prompts, persona responses |\n| DF6 | Voice synthesis requests | ECS Backend | Amazon Polly | Text content, audio streams |\n| DF7 | Image upload and analysis | User | ECS Backend | Image files, analysis results |\n| DF8 | Configuration retrieval | ECS Backend | Parameter Store | Application configuration |\n| DF9 | Session state management | ECS Backend | In-Memory Store | User sessions, conversation history |\n\n#### Trust boundaries:\n\n| Boundary ID | Purpose | Source | Target |\n|-|-|-|-|\n| TB1 | Internet/CDN boundary | User | CloudFront |\n| TB2 | CDN/Load Balancer boundary | CloudFront | ALB |\n| TB3 | Load Balancer/Application boundary | ALB | ECS Backend |\n| TB4 | Application/AI Services boundary | ECS Backend | Amazon Bedrock |\n| TB5 | Application/Voice Services boundary | ECS Backend | Amazon Polly |\n| TB6 | Application/Configuration boundary | ECS Backend | Parameter Store |\n| TB7 | User session isolation boundary | User Session A | User Session B |\n\n#### Threat sources:\n\n| Category | Description | Examples |\n|-|-|-|\n| External Attackers | Unauthorized users attempting system access | Web attackers, API abusers |\n| Malicious Users | Authenticated users with malicious intent | Prompt injection attackers, data exfiltration attempts |\n| Compromised Accounts | Legitimate accounts under attacker control | Session hijackers, credential stuffers |\n| AI Model Threats | Threats targeting AI/LLM components | Model manipulation, prompt injection |\n| Infrastructure Threats | Threats to underlying AWS services | Service disruption, configuration tampering |"
+  },
+  "assumptions": [
+    {
+      "id": "729520a0-bf98-47b0-9fc4-a4c96a0e3c18",
+      "numericId": 5,
+      "displayOrder": 5,
+      "content": "Sensitive configuration data does not contain hardcoded secrets or credentials"
+    },
+    {
+      "id": "1ed16993-4cae-49ab-ac72-b3061b9c3ec3",
+      "numericId": 4,
+      "displayOrder": 4,
+      "content": "Application undergoes regular security testing and vulnerability assessments"
+    },
+    {
+      "id": "5fff97e2-12de-409c-936c-78244b3e4a60",
+      "numericId": 3,
+      "displayOrder": 3,
+      "content": "Amazon Bedrock and Polly services have built-in security controls against abuse"
+    },
+    {
+      "id": "7a7630ad-f269-49cc-a0b6-389daaa678e6",
+      "numericId": 2,
+      "displayOrder": 2,
+      "content": "CloudFront IP restrictions are properly configured to prevent ALB bypass"
+    },
+    {
+      "id": "2d201009-fd66-4245-a913-68644d39e904",
+      "numericId": 1,
+      "displayOrder": 1,
+      "content": "AWS infrastructure security controls are properly configured and maintained"
+    }
+  ],
+  "mitigations": [
+    {
+      "id": "dac83695-a021-43f9-a3fc-380726c8ce19",
+      "numericId": 10,
+      "displayOrder": 10,
+      "content": "Implement proper error handling to prevent information disclosure",
+      "status": "mitigationResolved"
+    },
+    {
+      "id": "e331313f-298f-4ee2-a354-ef8c8afdf9cb",
+      "numericId": 9,
+      "displayOrder": 9,
+      "content": "Restrict ALB access to CloudFront IP ranges only",
+      "status": "mitigationResolved"
+    },
+    {
+      "id": "87cebb37-9be4-4c91-afec-c8590f2bd41f",
+      "numericId": 8,
+      "displayOrder": 8,
+      "content": "Use JWT tokens with appropriate expiration and validation",
+      "status": "mitigationResolved"
+    },
+    {
+      "id": "8f4a9945-d8f4-4dca-a794-c0d19d96487c",
+      "numericId": 7,
+      "displayOrder": 7,
+      "content": "Implement comprehensive logging and monitoring for security events",
+      "status": "mitigationResolved"
+    },
+    {
+      "id": "346cbb7a-21ff-48b1-bfb8-005bd87ab01b",
+      "numericId": 6,
+      "displayOrder": 6,
+      "content": "Use AWS WAF with CloudFront to protect against common web attacks",
+      "status": "mitigationResolved"
+    },
+    {
+      "id": "fd8bfeb5-0491-4526-9eba-20a3b5ca02d9",
+      "numericId": 5,
+      "displayOrder": 5,
+      "content": "Validate and sanitize image uploads with file type and size restrictions",
+      "status": "mitigationResolved"
+    },
+    {
+      "id": "f31a7da3-314c-41a4-bbd9-1518041659f1",
+      "numericId": 4,
+      "displayOrder": 4,
+      "content": "Implement rate limiting on API endpoints and WebSocket connections",
+      "status": "mitigationResolved"
+    },
+    {
+      "id": "5b34ff38-3d1b-43ba-ae23-da9b319f6dee",
+      "numericId": 3,
+      "displayOrder": 3,
+      "content": "Enforce strict session isolation and implement proper authorization checks",
+      "status": "mitigationResolved"
+    },
+    {
+      "id": "befc708f-1713-4166-bd8d-91d18ab4cddc",
+      "numericId": 2,
+      "displayOrder": 2,
+      "content": "Use parameterized prompts and prompt isolation to prevent AI prompt injection",
+      "status": "mitigationResolved"
+    },
+    {
+      "id": "e353fdd6-9e0c-43ab-a298-722496dd8898",
+      "numericId": 1,
+      "displayOrder": 1,
+      "content": "Implement comprehensive input validation and sanitization for all user inputs",
+      "status": "mitigationResolved"
+    }
+  ],
+  "assumptionLinks": [
+    {
+      "type": "Threat",
+      "assumptionId": "2d201009-fd66-4245-a913-68644d39e904",
+      "linkedId": "3df70b81-517d-44ba-940c-44470e599aea"
+    },
+    {
+      "type": "Threat",
+      "assumptionId": "2d201009-fd66-4245-a913-68644d39e904",
+      "linkedId": "44053a06-5746-4794-b8b6-34b92ef42cf4"
+    },
+    {
+      "type": "Threat",
+      "assumptionId": "1ed16993-4cae-49ab-ac72-b3061b9c3ec3",
+      "linkedId": "494991f8-4e21-4aa5-96f2-350d5ebd4774"
+    },
+    {
+      "type": "Threat",
+      "assumptionId": "2d201009-fd66-4245-a913-68644d39e904",
+      "linkedId": "d1fa6ea8-43a4-4ab4-801f-278d76547ccb"
+    },
+    {
+      "type": "Threat",
+      "assumptionId": "2d201009-fd66-4245-a913-68644d39e904",
+      "linkedId": "df4bfdba-3f2a-4eb0-ab42-39dfb93feef3"
+    },
+    {
+      "type": "Threat",
+      "assumptionId": "1ed16993-4cae-49ab-ac72-b3061b9c3ec3",
+      "linkedId": "79863c9b-2257-4e25-823a-c91e7ebb9110"
+    },
+    {
+      "type": "Threat",
+      "assumptionId": "2d201009-fd66-4245-a913-68644d39e904",
+      "linkedId": "79863c9b-2257-4e25-823a-c91e7ebb9110"
+    },
+    {
+      "type": "Threat",
+      "assumptionId": "1ed16993-4cae-49ab-ac72-b3061b9c3ec3",
+      "linkedId": "6ccde702-1bf9-4c0a-9df2-71f0c30640f9"
+    },
+    {
+      "type": "Threat",
+      "assumptionId": "729520a0-bf98-47b0-9fc4-a4c96a0e3c18",
+      "linkedId": "8f8def01-bda5-4af2-8ece-c4f98b4c3d74"
+    },
+    {
+      "type": "Threat",
+      "assumptionId": "1ed16993-4cae-49ab-ac72-b3061b9c3ec3",
+      "linkedId": "8f8def01-bda5-4af2-8ece-c4f98b4c3d74"
+    },
+    {
+      "type": "Threat",
+      "assumptionId": "729520a0-bf98-47b0-9fc4-a4c96a0e3c18",
+      "linkedId": "b6dd4d88-b6aa-4a08-9cf8-8b9a5e2ffff2"
+    },
+    {
+      "type": "Threat",
+      "assumptionId": "1ed16993-4cae-49ab-ac72-b3061b9c3ec3",
+      "linkedId": "b6dd4d88-b6aa-4a08-9cf8-8b9a5e2ffff2"
+    }
+  ],
+  "mitigationLinks": [
+    {
+      "mitigationId": "befc708f-1713-4166-bd8d-91d18ab4cddc",
+      "linkedId": "3df70b81-517d-44ba-940c-44470e599aea"
+    },
+    {
+      "mitigationId": "e353fdd6-9e0c-43ab-a298-722496dd8898",
+      "linkedId": "3df70b81-517d-44ba-940c-44470e599aea"
+    },
+    {
+      "mitigationId": "87cebb37-9be4-4c91-afec-c8590f2bd41f",
+      "linkedId": "3df70b81-517d-44ba-940c-44470e599aea"
+    },
+    {
+      "mitigationId": "e331313f-298f-4ee2-a354-ef8c8afdf9cb",
+      "linkedId": "44053a06-5746-4794-b8b6-34b92ef42cf4"
+    },
+    {
+      "mitigationId": "87cebb37-9be4-4c91-afec-c8590f2bd41f",
+      "linkedId": "494991f8-4e21-4aa5-96f2-350d5ebd4774"
+    },
+    {
+      "mitigationId": "346cbb7a-21ff-48b1-bfb8-005bd87ab01b",
+      "linkedId": "494991f8-4e21-4aa5-96f2-350d5ebd4774"
+    },
+    {
+      "mitigationId": "f31a7da3-314c-41a4-bbd9-1518041659f1",
+      "linkedId": "d1fa6ea8-43a4-4ab4-801f-278d76547ccb"
+    },
+    {
+      "mitigationId": "fd8bfeb5-0491-4526-9eba-20a3b5ca02d9",
+      "linkedId": "df4bfdba-3f2a-4eb0-ab42-39dfb93feef3"
+    },
+    {
+      "mitigationId": "87cebb37-9be4-4c91-afec-c8590f2bd41f",
+      "linkedId": "79863c9b-2257-4e25-823a-c91e7ebb9110"
+    },
+    {
+      "mitigationId": "346cbb7a-21ff-48b1-bfb8-005bd87ab01b",
+      "linkedId": "79863c9b-2257-4e25-823a-c91e7ebb9110"
+    },
+    {
+      "mitigationId": "5b34ff38-3d1b-43ba-ae23-da9b319f6dee",
+      "linkedId": "79863c9b-2257-4e25-823a-c91e7ebb9110"
+    },
+    {
+      "mitigationId": "dac83695-a021-43f9-a3fc-380726c8ce19",
+      "linkedId": "79863c9b-2257-4e25-823a-c91e7ebb9110"
+    },
+    {
+      "mitigationId": "f31a7da3-314c-41a4-bbd9-1518041659f1",
+      "linkedId": "6ccde702-1bf9-4c0a-9df2-71f0c30640f9"
+    },
+    {
+      "mitigationId": "87cebb37-9be4-4c91-afec-c8590f2bd41f",
+      "linkedId": "8f8def01-bda5-4af2-8ece-c4f98b4c3d74"
+    },
+    {
+      "mitigationId": "dac83695-a021-43f9-a3fc-380726c8ce19",
+      "linkedId": "8f8def01-bda5-4af2-8ece-c4f98b4c3d74"
+    },
+    {
+      "mitigationId": "5b34ff38-3d1b-43ba-ae23-da9b319f6dee",
+      "linkedId": "8f8def01-bda5-4af2-8ece-c4f98b4c3d74"
+    },
+    {
+      "mitigationId": "87cebb37-9be4-4c91-afec-c8590f2bd41f",
+      "linkedId": "b6dd4d88-b6aa-4a08-9cf8-8b9a5e2ffff2"
+    },
+    {
+      "mitigationId": "dac83695-a021-43f9-a3fc-380726c8ce19",
+      "linkedId": "b6dd4d88-b6aa-4a08-9cf8-8b9a5e2ffff2"
+    },
+    {
+      "mitigationId": "8f4a9945-d8f4-4dca-a794-c0d19d96487c",
+      "linkedId": "b6dd4d88-b6aa-4a08-9cf8-8b9a5e2ffff2"
+    },
+    {
+      "mitigationId": "5b34ff38-3d1b-43ba-ae23-da9b319f6dee",
+      "linkedId": "b6dd4d88-b6aa-4a08-9cf8-8b9a5e2ffff2"
+    }
+  ],
+  "threats": [
+    {
+      "id": "b6dd4d88-b6aa-4a08-9cf8-8b9a5e2ffff2",
+      "numericId": 9,
+      "displayOrder": 9,
+      "metadata": [
+        {
+          "key": "Priority",
+          "value": "Medium"
+        }
+      ],
+      "threatSource": "malicious user",
+      "prerequisites": "with system access",
+      "threatAction": "manipulate conversation history or persona responses",
+      "threatImpact": "data tampering and loss of conversation integrity",
+      "impactedGoal": [
+        "integrity"
+      ],
+      "impactedAssets": [
+        "conversation history",
+        "persona responses"
+      ],
+      "statement": "A malicious user with system access can manipulate conversation history or persona responses, which leads to data tampering and loss of conversation integrity, resulting in reduced integrity of conversation history and persona responses",
+      "status": "threatResolved"
+    },
+    {
+      "id": "8f8def01-bda5-4af2-8ece-c4f98b4c3d74",
+      "numericId": 8,
+      "displayOrder": 8,
+      "metadata": [
+        {
+          "key": "Priority",
+          "value": "Low"
+        }
+      ],
+      "threatSource": "internal actor",
+      "threatAction": "deny making inappropriate requests to AI persona",
+      "threatImpact": "lack of accountability for system abuse",
+      "impactedGoal": [
+        "accountability"
+      ],
+      "impactedAssets": [
+        "audit logs",
+        "compliance records"
+      ],
+      "statement": "An internal actor can deny making inappropriate requests to AI persona, which leads to lack of accountability for system abuse, resulting in reduced accountability of audit logs and compliance records",
+      "status": "threatResolved"
+    },
+    {
+      "id": "6ccde702-1bf9-4c0a-9df2-71f0c30640f9",
+      "numericId": 7,
+      "displayOrder": 7,
+      "metadata": [
+        {
+          "key": "Priority",
+          "value": "Medium"
+        }
+      ],
+      "threatSource": "malicious user",
+      "threatAction": "abuse the voice synthesis service with excess requests",
+      "threatImpact": "resource exhaustion and increased costs",
+      "impactedGoal": [
+        "availability"
+      ],
+      "impactedAssets": [
+        "Voice Service"
+      ],
+      "statement": "A malicious user can abuse the voice synthesis service with excess requests, which leads to resource exhaustion and increased costs, resulting in reduced availability of Voice Service",
+      "status": "threatResolved"
+    },
+    {
+      "id": "79863c9b-2257-4e25-823a-c91e7ebb9110",
+      "numericId": 6,
+      "displayOrder": 6,
+      "metadata": [
+        {
+          "key": "Priority",
+          "value": "Medium"
+        }
+      ],
+      "threatSource": "external threat actor",
+      "prerequisites": "with stolen or compromised JWT Tokens",
+      "threatAction": "impersonate legitimate users",
+      "threatImpact": "unauthorized access to user accounts and data",
+      "impactedGoal": [
+        "confidentiality",
+        "integrity"
+      ],
+      "impactedAssets": [
+        "user accounts",
+        "conversation data"
+      ],
+      "statement": "An external threat actor with stolen or compromised JWT Tokens can impersonate legitimate users, which leads to unauthorized access to user accounts and data, resulting in reduced confidentiality and/or integrity of user accounts and conversation data",
+      "status": "threatResolved"
+    },
+    {
+      "id": "df4bfdba-3f2a-4eb0-ab42-39dfb93feef3",
+      "numericId": 5,
+      "displayOrder": 5,
+      "metadata": [
+        {
+          "key": "Priority",
+          "value": "Medium"
+        }
+      ],
+      "threatSource": "malicious user",
+      "threatAction": "upload malicious images containing executable code or malware",
+      "threatImpact": "potential code execution or system compromise",
+      "impactedGoal": [
+        "integrity",
+        "availability"
+      ],
+      "impactedAssets": [
+        "image processing service",
+        "backend infrastructure"
+      ],
+      "statement": "A malicious user can upload malicious images containing executable code or malware, which leads to potential code execution or system compromise, resulting in reduced integrity and/or availability of image processing service and backend infrastructure",
+      "status": "threatResolved"
+    },
+    {
+      "id": "d1fa6ea8-43a4-4ab4-801f-278d76547ccb",
+      "numericId": 4,
+      "displayOrder": 4,
+      "metadata": [
+        {
+          "key": "Priority",
+          "value": "Medium"
+        }
+      ],
+      "threatSource": "external threat actor",
+      "threatAction": "flood the system with WebSocket connection requests",
+      "threatImpact": "service degredation and denial of service",
+      "impactedGoal": [
+        "availability"
+      ],
+      "impactedAssets": [
+        "WebSocket service",
+        "backend API service"
+      ],
+      "statement": "An external threat actor can flood the system with WebSocket connection requests, which leads to service degredation and denial of service, resulting in reduced availability of WebSocket service and backend API service",
+      "status": "threatResolved"
+    },
+    {
+      "id": "494991f8-4e21-4aa5-96f2-350d5ebd4774",
+      "numericId": 3,
+      "displayOrder": 3,
+      "metadata": [
+        {
+          "key": "Priority",
+          "value": "Medium"
+        }
+      ],
+      "threatSource": "malicious user",
+      "prerequisites": "with valid session credentials",
+      "threatAction": "access other users' conversation sessions",
+      "threatImpact": "unauthorized data disclosure and privacy violation",
+      "impactedGoal": [
+        "confidentiality"
+      ],
+      "impactedAssets": [
+        "user conversations",
+        "session data"
+      ],
+      "statement": "A malicious user with valid session credentials can access other users' conversation sessions, which leads to unauthorized data disclosure and privacy violation, resulting in reduced confidentiality of user conversations and session data",
+      "status": "threatResolved"
+    },
+    {
+      "id": "44053a06-5746-4794-b8b6-34b92ef42cf4",
+      "numericId": 2,
+      "displayOrder": 2,
+      "metadata": [
+        {
+          "key": "Priority",
+          "value": "Medium"
+        }
+      ],
+      "threatSource": "external attacker",
+      "prerequisites": "",
+      "threatAction": "bypass CloudFront and directly access the ALB",
+      "threatImpact": "unauthorized API access and potential system compromise",
+      "impactedGoal": [
+        "confidentiality",
+        "integrity",
+        "availability"
+      ],
+      "impactedAssets": [
+        "backend services",
+        "user data"
+      ],
+      "statement": "An external attacker can bypass CloudFront and directly access the ALB, which leads to unauthorized API access and potential system compromise, resulting in reduced confidentiality, integrity and/or availability of backend services and user data",
+      "status": "threatResolved"
+    },
+    {
+      "id": "3df70b81-517d-44ba-940c-44470e599aea",
+      "numericId": 1,
+      "displayOrder": 1,
+      "metadata": [
+        {
+          "key": "Priority",
+          "value": "High"
+        }
+      ],
+      "threatSource": "malicious user",
+      "prerequisites": "with authenticated access to the system",
+      "threatAction": "inject malicious prompts into AI persona conversations",
+      "threatImpact": "manipulation of AI responses and potential system compromise",
+      "impactedGoal": [
+        "confidentiality",
+        "integrity"
+      ],
+      "impactedAssets": [
+        "AI persona responses",
+        "conversation data"
+      ],
+      "statement": "A malicious user with authenticated access to the system can inject malicious prompts into AI persona conversations, which leads to manipulation of AI responses and potential system compromise, resulting in reduced confidentiality and/or integrity of AI persona responses and conversation data",
+      "status": "threatResolved"
+    }
+  ]
+}

@@ -7,6 +7,7 @@ import { createUserSessionRoutes } from '../../controllers/userSessionController
 import { UserSessionStorage } from '../../services/UserSessionStorage';
 import { SessionService } from '../../services/SessionService';
 import { Session, SessionStatus } from '@group-chat-ai/shared';
+import { errorHandler } from '../../middleware/errorHandler';
 
 describe('UserSessionController', () => {
   let app: express.Application;
@@ -23,6 +24,9 @@ describe('UserSessionController', () => {
     // Use the factory function to create routes
     const routes = createUserSessionRoutes(userSessionStorage, sessionService);
     app.use('/user-sessions', routes);
+
+    // Add error handler middleware
+    app.use(errorHandler);
   });
 
   describe('DELETE /user-sessions/:userId/:sessionId', () => {
@@ -98,16 +102,34 @@ describe('UserSessionController', () => {
       expect(response.body.message).toContain('not found');
     });
 
-    it('should return 400 for invalid parameters', async () => {
-      // Missing sessionId
+    it('should return 404 for invalid route patterns', async () => {
+      // Missing sessionId - doesn't match route pattern
       await request(app)
         .delete('/user-sessions/test-user/')
-        .expect(400);
+        .expect(404);
 
-      // Missing userId
+      // Missing userId - doesn't match route pattern
       await request(app)
         .delete('/user-sessions//test-session')
+        .expect(404);
+    });
+
+    it('should return 400 for empty parameters', async () => {
+      // Empty userId
+      const response1 = await request(app)
+        .delete('/user-sessions/%20/session-id')
         .expect(400);
+
+      expect(response1.body).toHaveProperty('message');
+      expect(response1.body.message).toContain('User ID and Session ID are required');
+
+      // Empty sessionId
+      const response2 = await request(app)
+        .delete('/user-sessions/user-id/%20')
+        .expect(400);
+
+      expect(response2.body).toHaveProperty('message');
+      expect(response2.body.message).toContain('User ID and Session ID are required');
     });
   });
 

@@ -226,7 +226,7 @@ export function createUserSessionRoutes(
 
       logger.info('Deleting user session', { userId, sessionId });
 
-      if (!userId || !sessionId) {
+      if (!userId || !sessionId || userId.trim() === '' || sessionId.trim() === '') {
         throw new ValidationException('User ID and Session ID are required');
       }
 

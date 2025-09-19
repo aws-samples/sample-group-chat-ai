@@ -2,26 +2,31 @@
 
 import { VALIDATION_LIMITS, SESSION_CONFIG } from '../constants';
 import { SessionStatus, MessageSender } from '../types';
+import * as crypto from 'crypto';
 
 /**
  * Generate a unique session ID
  */
 export function generateSessionId(): string {
-  return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  // Use 16 bytes (128 bits) for strong uniqueness and unpredictability
+  const randomPart = crypto.randomBytes(16).toString('hex');
+  return `session_${Date.now()}_${randomPart}`;
 }
 
 /**
  * Generate a unique message ID
  */
 export function generateMessageId(): string {
-  return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const randomPart = crypto.randomBytes(16).toString('hex');
+  return `msg_${Date.now()}_${randomPart}`;
 }
 
 /**
  * Generate a unique document ID
  */
 export function generateDocumentId(): string {
-  return `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const randomPart = crypto.randomBytes(16).toString('hex');
+  return `doc_${Date.now()}_${randomPart}`;
 }
 
 /**

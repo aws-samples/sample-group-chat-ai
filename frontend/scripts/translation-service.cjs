@@ -254,7 +254,7 @@ Output the translated JSON:`;
     // Fix nested quotes issues
     fixed = fixed.replace(/"([^"]*)"(\s*:\s*)"([^"]*)"/g, (match, key, colon, value) => {
       // Escape any quotes within the value
-      const escapedValue = value.replace(/"/g, '\\"');
+      const escapedValue = value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
       return `"${key}"${colon}"${escapedValue}"`;
     });
 

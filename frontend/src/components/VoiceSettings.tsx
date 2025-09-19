@@ -44,7 +44,7 @@ export const VoiceSettings: React.FC<VoiceSettingsProps> = ({
   onToggleExpanded,
 }) => {
   const { apiService } = useApi();
-  const { t } = useTranslation('components');
+  const { t } = useTranslation(['components', 'pages']);
   const [settings, setSettings] = useState<VoiceSettingsType>(() => {
     return (
       currentSettings || {

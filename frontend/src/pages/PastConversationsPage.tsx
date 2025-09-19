@@ -16,6 +16,7 @@ import {
   TextFilter,
   Select,
   Pagination,
+  Modal,
 } from '@cloudscape-design/components';
 import { useUserSessions } from '../hooks/useUserSessions';
 import { formatDistanceToNow, format } from 'date-fns';
@@ -30,6 +31,8 @@ export const PastConversationsPage: React.FC = () => {
   const [filterText, setFilterText] = useState('');
   const [statusFilter, setStatusFilter] = useState<{ label: string; value?: string }>({ label: t('pastConversations.statusOptions.all'), value: undefined });
   const [selectedSession, setSelectedSession] = useState<UserSession | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<UserSession | null>(null);
 
   const {
     sessions,
@@ -60,18 +63,27 @@ export const PastConversationsPage: React.FC = () => {
     }
   };
 
-  const handleDeleteSession = async () => {
+  const handleDeleteSession = () => {
     if (!selectedSession) return;
-    if (window.confirm(
-      // nosemgrep: i18next-key-format
-      t('pastConversations.confirmDelete', { defaultValue: 'Are you sure you want to delete this session?' }))) {
-      try {
-        await deleteSession(selectedSession.sessionId);
-        setSelectedSession(null); // Clear selection after delete
-      } catch (err) {
-        console.error('Failed to delete session:', err);
-      }
+    setSessionToDelete(selectedSession);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteSession = async () => {
+    if (!sessionToDelete) return;
+    try {
+      await deleteSession(sessionToDelete.sessionId);
+      setSelectedSession(null); // Clear selection after delete
+      setShowDeleteModal(false);
+      setSessionToDelete(null);
+    } catch (err) {
+      console.error('Failed to delete session:', err);
     }
+  };
+
+  const cancelDeleteSession = () => {
+    setShowDeleteModal(false);
+    setSessionToDelete(null);
   };
 
   const getStatusBadge = (status: string) => {
@@ -264,6 +276,32 @@ export const PastConversationsPage: React.FC = () => {
           }
         />
       </SpaceBetween>
+
+      <Modal
+        onDismiss={cancelDeleteSession}
+        visible={showDeleteModal}
+        closeAriaLabel={t('common:actions.close')}
+        footer={
+          <Box float="right">
+            <SpaceBetween direction="horizontal" size="xs">
+              <Button variant="link" onClick={cancelDeleteSession}>
+                {t('common:actions.cancel')}
+              </Button>
+              <Button variant="primary" onClick={confirmDeleteSession}>
+                {t('common:actions.delete')}
+              </Button>
+            </SpaceBetween>
+          </Box>
+        }
+        header={t('pastConversations.confirmDelete')}
+      >
+        <Box>
+          {t('pastConversations.confirmDeleteMessage', {
+            defaultValue: 'Are you sure you want to delete this session? This action cannot be undone.',
+            sessionTitle: sessionToDelete?.title || `Session ${sessionToDelete?.sessionId?.slice(0, 8) || ''}`
+          })}
+        </Box>
+      </Modal>
     </Container>
   );
 };

@@ -58,7 +58,18 @@ export class AuthenticatedApiService {
       throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
     }
 
-    return await response.json();
+    // Handle empty responses (like 204 No Content)
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      return undefined as T;
+    }
+
+    // Check if response has content
+    const text = await response.text();
+    if (!text) {
+      return undefined as T;
+    }
+
+    return JSON.parse(text);
   }
 
   // Health check

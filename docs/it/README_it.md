@@ -16,21 +16,6 @@
 > • 🇨🇳 **本文档还提供以下语言版本:** [中文](./README_zh.md)
 
 
-**📖 Questo documento è disponibile in più lingue:**
-- 🇸🇦 [العربية (Arabic)](docs/README_ar.md)
-- 🇩🇪 [Deutsch (German)](docs/README_de.md) 
-- 🇪🇸 [Español (Spanish)](docs/README_es.md)
-- 🇫🇷 [Français (French)](docs/README_fr.md)
-- 🇮🇹 [Italiano (Italian)](docs/README_it.md)
-- 🇯🇵 [日本語 (Japanese)](docs/README_ja.md)
-- 🇰🇷 [한국어 (Korean)](docs/README_ko.md)
-- 🇵🇹 [Português (Portuguese)](docs/README_pt.md)
-- 🇷🇺 [Русский (Russian)](docs/README_ru.md)
-- 🇸🇪 [Svenska (Swedish)](docs/README_sv.md)
-- 🇨🇳 [中文 (Chinese)](docs/README_zh.md)
-
----
-
 Group Chat AI è una piattaforma collaborativa avanzata che consente conversazioni di gruppo dinamiche con più personas AI. Il sistema facilita discussioni significative attraverso prospettive diverse, permettendo agli utenti di esplorare idee, ricevere feedback e partecipare a conversazioni multi-partecipante con agenti AI che rappresentano ruoli e punti di vista differenti.
 
 ## 🏗️ Panoramica dell'Architettura

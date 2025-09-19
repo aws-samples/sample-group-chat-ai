@@ -16,21 +16,6 @@
 > • 🇨🇳 **本文档还提供以下语言版本:** [中文](./README_zh.md)
 
 
-**📖 이 문서는 여러 언어로 제공됩니다:**
-- 🇸🇦 [العربية (Arabic)](docs/README_ar.md)
-- 🇩🇪 [Deutsch (German)](docs/README_de.md) 
-- 🇪🇸 [Español (Spanish)](docs/README_es.md)
-- 🇫🇷 [Français (French)](docs/README_fr.md)
-- 🇮🇹 [Italiano (Italian)](docs/README_it.md)
-- 🇯🇵 [日本語 (Japanese)](docs/README_ja.md)
-- 🇰🇷 [한국어 (Korean)](docs/README_ko.md)
-- 🇵🇹 [Português (Portuguese)](docs/README_pt.md)
-- 🇷🇺 [Русский (Russian)](docs/README_ru.md)
-- 🇸🇪 [Svenska (Swedish)](docs/README_sv.md)
-- 🇨🇳 [中文 (Chinese)](docs/README_zh.md)
-
----
-
 Group Chat AI는 여러 AI 페르소나와 동적인 그룹 대화를 가능하게 하는 고급 협업 플랫폼입니다. 이 시스템은 다양한 관점에서 의미 있는 토론을 촉진하여 사용자가 아이디어를 탐색하고, 피드백을 받고, 다양한 역할과 관점을 대표하는 AI 에이전트와 다자간 대화에 참여할 수 있도록 합니다.
 
 ## 🏗️ 아키텍처 개요

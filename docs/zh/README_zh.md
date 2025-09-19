@@ -16,20 +16,7 @@
 > • 🇨🇳 **本文档还提供以下语言版本:** [中文](#)
 
 
-**📖 本文档提供多种语言版本：**
-- 🇸🇦 [العربية (Arabic)](docs/README_ar.md)
-- 🇩🇪 [Deutsch (German)](docs/README_de.md) 
-- 🇪🇸 [Español (Spanish)](docs/README_es.md)
-- 🇫🇷 [Français (French)](docs/README_fr.md)
-- 🇮🇹 [Italiano (Italian)](docs/README_it.md)
-- 🇯🇵 [日本語 (Japanese)](docs/README_ja.md)
-- 🇰🇷 [한국어 (Korean)](docs/README_ko.md)
-- 🇵🇹 [Português (Portuguese)](docs/README_pt.md)
-- 🇷🇺 [Русский (Russian)](docs/README_ru.md)
-- 🇸🇪 [Svenska (Swedish)](docs/README_sv.md)
-- 🇨🇳 [中文 (Chinese)](docs/README_zh.md)
 
----
 
 Group Chat AI 是一个先进的协作平台，支持与多个 AI 角色进行动态群组对话。该系统促进跨不同视角的有意义讨论，允许用户探索想法、获得反馈，并与代表不同角色和观点的 AI 代理进行多参与者对话。
 

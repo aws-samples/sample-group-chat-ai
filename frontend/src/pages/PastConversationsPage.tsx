@@ -298,7 +298,7 @@ export const PastConversationsPage: React.FC = () => {
         <Box>
           {t('pastConversations.confirmDeleteMessage', {
             defaultValue: 'Are you sure you want to delete this session? This action cannot be undone.',
-            sessionTitle: sessionToDelete?.title || `Session ${sessionToDelete?.sessionId.slice(0, 8)}`
+            sessionTitle: sessionToDelete?.title || `Session ${sessionToDelete?.sessionId?.slice(0, 8) || ''}`
           })}
         </Box>
       </Modal>

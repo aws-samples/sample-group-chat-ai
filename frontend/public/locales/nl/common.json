@@ -1,1 +1,114 @@
-{"navigation":{"appTitle":"Groepschat AI","userGuides":"Gebruikershandleidingen","profile":"Profiel","signOut":"Uitloggen","user":"Gebruiker","home":"Home","chat":"Groepschat","pastConversations":"Eerdere Groepschats","dashboard":"Dashboard"},"actions":{"save":"Opslaan","cancel":"Annuleren","edit":"Bewerken","delete":"Verwijderen","reset":"Resetten","import":"Importeren","export":"Exporteren","start":"Starten","stop":"Stoppen","close":"Sluiten","goHome":"Ga naar Home","show":"Tonen","hide":"Verbergen","select":"Selecteren","upload":"Uploaden","send":"Verzenden","back":"Terug","newConversation":"Nieuwe Groepschat","resume":"Hervatten","viewDetails":"Details Bekijken"},"auth":{"defaultVoiceId":"Joanna"},"errors":{"configurationError":"Configuratiefout","loadFailed":"Laden van configuratie mislukt","uploadFailed":"Upload mislukt","importFailed":"Importeren mislukt","generic":"Er is een fout opgetreden","authenticationError":"Authenticatiefout","sessionError":"Sessiefout","securityError":"Beveiligingsfout","networkError":"Netwerkfout opgetreden","fileEmpty":"Bestand is leeg","invalidFileFormat":"Ongeldig bestandsformaat of beschadigde data","parseError":"Kan JSON-bestand niet verwerken","websocketFailed":"WebSocket-verbinding mislukt","websocketTimeout":"WebSocket-verbinding time-out","unauthorized":"Niet geautoriseerd - token mogelijk verlopen"},"file":{"sizes":["Bytes","KB","MB","GB"]},"labels":{"enabled":"Ingeschakeld","selected":"Geselecteerd","custom":"Aangepast","customized":"Aangepast","user":"Gebruiker","ai":"AI","you":"Jij","returnHome":"Terug naar Home","returnToHome":"Terug naar Home","imageUnavailable":"Afbeelding niet beschikbaar","noPersonasFound":"Geen persona's gevonden","noDetailsProvided":"Geen details verstrekt","uploadedImage":"Geüploade afbeelding","fileDetails":"Bestandsdetails"},"states":{"loading":"Laden...","saving":"Opslaan...","uploading":"Uploaden...","processing":"Verwerken...","sending":"Verzenden...","complete":"Voltooid","error":"Fout","success":"Succes","failed":"Mislukt","empty":"Leeg","unknown":"Onbekend"},"time":{"justNow":"Zojuist"},"validation":{"required":"Dit veld is verplicht","invalid":"Ongeldige waarde","tooShort":"Waarde is te kort","tooLong":"Waarde is te lang"},"webSocket":{"states":{"connecting":"VERBINDEN","connected":"VERBONDEN","closing":"SLUITEN","disconnected":"VERBINDING VERBROKEN","unknown":"ONBEKEND"}}}
+{
+  "navigation": {
+    "appTitle": "Groepschat AI",
+    "userGuides": "Gebruikershandleidingen",
+    "profile": "Profiel",
+    "signOut": "Uitloggen",
+    "user": "Gebruiker",
+    "home": "Home",
+    "chat": "Groepschat",
+    "pastConversations": "Eerdere Groepschats",
+    "dashboard": "Dashboard"
+  },
+  "actions": {
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "edit": "Bewerken",
+    "delete": "Verwijderen",
+    "reset": "Resetten",
+    "import": "Importeren",
+    "export": "Exporteren",
+    "start": "Starten",
+    "stop": "Stoppen",
+    "close": "Sluiten",
+    "goHome": "Ga naar Home",
+    "show": "Tonen",
+    "hide": "Verbergen",
+    "select": "Selecteren",
+    "upload": "Uploaden",
+    "send": "Verzenden",
+    "back": "Terug",
+    "newConversation": "Nieuwe Groepschat",
+    "resume": "Hervatten",
+    "viewDetails": "Details bekijken"
+  },
+  "auth": {
+    "defaultVoiceId": "Joanna"
+  },
+  "errors": {
+    "configurationError": "Configuratiefout",
+    "loadFailed": "Laden van configuratie mislukt",
+    "uploadFailed": "Upload mislukt",
+    "importFailed": "Importeren mislukt",
+    "generic": "Er is een fout opgetreden",
+    "authenticationError": "Authenticatiefout",
+    "sessionError": "Sessiefout",
+    "securityError": "Beveiligingsfout",
+    "networkError": "Netwerkfout opgetreden",
+    "fileEmpty": "Bestand is leeg",
+    "invalidFileFormat": "Ongeldig bestandsformaat of beschadigde data",
+    "parseError": "Kan JSON-bestand niet verwerken",
+    "websocketFailed": "WebSocket-verbinding mislukt",
+    "websocketTimeout": "WebSocket-verbinding time-out",
+    "unauthorized": "Niet geautoriseerd - token mogelijk verlopen"
+  },
+  "file": {
+    "sizes": [
+      "Bytes",
+      "KB",
+      "MB",
+      "GB"
+    ]
+  },
+  "labels": {
+    "enabled": "Ingeschakeld",
+    "selected": "Geselecteerd",
+    "custom": "Aangepast",
+    "customized": "Aangepast",
+    "user": "Gebruiker",
+    "ai": "AI",
+    "you": "Jij",
+    "returnHome": "Terug naar Home",
+    "returnToHome": "Terug naar Home",
+    "imageUnavailable": "Afbeelding niet beschikbaar",
+    "noPersonasFound": "Geen persona's gevonden",
+    "noDetailsProvided": "Geen details verstrekt",
+    "uploadedImage": "Geüploade afbeelding",
+    "fileDetails": "Bestandsdetails"
+  },
+  "states": {
+    "loading": "Laden...",
+    "saving": "Opslaan...",
+    "uploading": "Uploaden...",
+    "processing": "Verwerken...",
+    "sending": "Verzenden...",
+    "complete": "Voltooid",
+    "error": "Fout",
+    "success": "Succes",
+    "failed": "Mislukt",
+    "empty": "Leeg",
+    "unknown": "Onbekend"
+  },
+  "time": {
+    "justNow": "Zojuist"
+  },
+  "validation": {
+    "required": "Dit veld is verplicht",
+    "invalid": "Ongeldige waarde",
+    "tooShort": "Waarde is te kort",
+    "tooLong": "Waarde is te lang"
+  },
+  "webSocket": {
+    "states": {
+      "connecting": "VERBINDEN",
+      "connected": "VERBONDEN",
+      "closing": "SLUITEN",
+      "disconnected": "VERBINDING VERBROKEN",
+      "unknown": "ONBEKEND"
+    }
+  },
+  "logout": {
+    "signingOut": "Aan het uitloggen...",
+    "pleaseWait": "Even geduld"
+  }
+}

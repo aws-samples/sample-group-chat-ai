@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 
 export const LogoutPage: React.FC = () => {
   const auth = useAuth();
-  const { t } = useTranslation('pages');
+  const { t } = useTranslation(['pages', 'common']);
 
   useEffect(() => {
     const performLogout = async () => {
@@ -38,8 +38,8 @@ export const LogoutPage: React.FC = () => {
       <Box textAlign="center" padding="xxl">
         <Spinner size="large" />
         <Box margin={{ top: 'm' }}>
-          <h2>{t('logout.signingOut', { defaultValue: 'Signing out...' })}</h2>
-          <p>{t('logout.pleaseWait', { defaultValue: 'Please wait while we sign you out.' })}</p>
+          <h2>{t('common:logout.signingOut', { defaultValue: 'Signing out...' })}</h2>
+          <p>{t('common:logout.pleaseWait', { defaultValue: 'Please wait while we sign you out.' })}</p>
         </Box>
       </Box>
     </Container>

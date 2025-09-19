@@ -46,7 +46,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   disabled = false,
   sessionId,
 }) => {
-  const { t } = useTranslation('components');
+  const { t } = useTranslation(['components', 'pages']);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -328,9 +328,9 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
         {/* Help text */}
         {/* nosemgrep: i18next-key-format */}
-        <Alert type='info' header={t('pages.userGuides.features.contentManagement.title')}>
+        <Alert type='info' header={t('pages:userGuides.features.contentManagement.title')}>
           {/* nosemgrep: i18next-key-format */}
-          {t('pages.userGuides.features.contentManagement.description')}
+          {t('pages:userGuides.features.contentManagement.description')}
         </Alert>
       </SpaceBetween>
     </Box>

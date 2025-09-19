@@ -10,6 +10,7 @@
       "DOM",
       "DOM.Iterable"
     ],
+    "types": ["jest", "node"],
     "module": "ESNext",
     "skipLibCheck": true,
     "moduleResolution": "node",

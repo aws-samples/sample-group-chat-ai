@@ -280,7 +280,7 @@ export const PastConversationsPage: React.FC = () => {
       <Modal
         onDismiss={cancelDeleteSession}
         visible={showDeleteModal}
-        closeAriaLabel="Close modal"
+        closeAriaLabel={t('common:actions.close')}
         footer={
           <Box float="right">
             <SpaceBetween direction="horizontal" size="xs">

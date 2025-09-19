@@ -234,8 +234,8 @@ Output the translated JSON:`;
 
     // Ensure proper string quoting
     cleaned = cleaned.replace(/:\s*'([^']*)'/g, (match, p1) => {
-      // Replace single quotes with double quotes, escaping internal quotes
-      return ': "' + p1.replace(/"/g, '\\"').replace(/\n/g, ' ') + '"';
+      // Replace single quotes with double quotes, escaping backslashes and internal quotes
+      return ': "' + p1.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, ' ') + '"';
     });
 
     return cleaned;

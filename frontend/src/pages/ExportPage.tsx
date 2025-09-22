@@ -337,13 +337,18 @@ export const ExportPage: React.FC = () => {
               </Box>
             ) : (
               <SpaceBetween size="s">
-                {messages.map((message, index) => {
+                {messages
+                  .filter((message, index, array) => {
+                    // Remove duplicate messages by checking if this is the first occurrence of this messageId
+                    return array.findIndex(m => m.messageId === message.messageId) === index;
+                  })
+                  .map((message, index) => {
                   const isUser = message.sender === MessageSender.USER;
-                  const senderName = isUser 
-                    ? t('export.message.you') 
+                  const senderName = isUser
+                    ? t('export.message.you')
                     : getPersonaNameWithCustom(message.personaId || '', personaInfoMap);
-                  const senderRole = isUser 
-                    ? t('export.message.user') 
+                  const senderRole = isUser
+                    ? t('export.message.user')
                     : (personaInfoMap[message.personaId || '']?.role || getPersonaRole(message.personaId || ''));
                   const timestamp = new Date(message.timestamp).toLocaleTimeString([], {
                     hour: '2-digit',
@@ -351,8 +356,8 @@ export const ExportPage: React.FC = () => {
                   });
 
                   return (
-                    <div 
-                      key={`${message.timestamp}-${index}`}
+                    <div
+                      key={`${message.messageId}-${index}`}
                       className={`export-message ${isUser ? 'user-message' : 'persona-message'}`}
                     >
                       <div className="message-header">

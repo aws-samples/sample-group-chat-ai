@@ -25,6 +25,8 @@ export interface WebSocketCallbacks {
   onError?: (data: WebSocketErrorMessage) => void;
   onConnectionClosed?: () => void;
   onConnectionError?: (error: Event) => void;
+  onReconnecting?: (attempt: number) => void;
+  onReconnectFailed?: (attempt: number) => void;
 }
 
 export class WebSocketService {
@@ -32,10 +34,13 @@ export class WebSocketService {
   private sessionId: string | null = null;
   private callbacks: WebSocketCallbacks = {};
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
   private reconnectInterval = 1000; // Start with 1 second
+  private maxReconnectInterval = 30000; // Max 30 seconds between attempts
   private reconnectTimer: NodeJS.Timeout | null = null;
+  private pingTimer: NodeJS.Timeout | null = null;
+  private pingInterval = 30000; // Ping every 30 seconds
   private isManualClose = false;
+  private lastPongReceived = 0;
 
   /**
    * Connect to WebSocket server for a specific session
@@ -61,6 +66,8 @@ export class WebSocketService {
         this.ws.onopen = () => {
           console.log('✅ WebSocket connected successfully for session:', sessionId);
           this.reconnectAttempts = 0;
+          this.lastPongReceived = Date.now();
+          this.startPingTimer();
           resolve();
         };
 
@@ -81,7 +88,7 @@ export class WebSocketService {
           }
 
           // Attempt reconnection if not manually closed
-          if (!this.isManualClose && this.reconnectAttempts < this.maxReconnectAttempts) {
+          if (!this.isManualClose) {
             this.scheduleReconnect();
           }
         };
@@ -115,6 +122,8 @@ export class WebSocketService {
    */
   disconnect(): void {
     this.isManualClose = true;
+
+    this.stopPingTimer();
 
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
@@ -226,6 +235,33 @@ export class WebSocketService {
   }
 
   /**
+   * Get current reconnect attempt number
+   */
+  getReconnectAttempts(): number {
+    return this.reconnectAttempts;
+  }
+
+  /**
+   * Manual reconnect - resets attempt counter and tries immediately
+   */
+  reconnect(): Promise<void> {
+    if (!this.sessionId) {
+      return Promise.reject(new Error('No session ID available for reconnection'));
+    }
+
+    // Reset attempts and try connecting immediately
+    this.reconnectAttempts = 0;
+    this.isManualClose = false;
+
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+
+    return this.connect(this.sessionId, this.callbacks);
+  }
+
+  /**
    * Handle incoming WebSocket messages
    */
   private handleMessage(event: MessageEvent): void {
@@ -284,7 +320,13 @@ export class WebSocketService {
           break;
 
         default:
-          console.warn('Unknown WebSocket message type:', message.type);
+          // Handle pong messages
+          if (event.data === 'pong') {
+            this.lastPongReceived = Date.now();
+            console.log('📍 Pong received from server');
+          } else {
+            console.warn('Unknown WebSocket message type:', message.type);
+          }
       }
     } catch (error) {
       console.error('Error parsing WebSocket message:', error);
@@ -301,21 +343,72 @@ export class WebSocketService {
 
     const delay = Math.min(
       this.reconnectInterval * Math.pow(2, this.reconnectAttempts),
-      30000 // Max 30 seconds
+      this.maxReconnectInterval
     );
 
     console.log(
       `Scheduling WebSocket reconnect in ${delay}ms (attempt ${this.reconnectAttempts + 1})`
     );
 
+    // Notify callback about reconnection attempt
+    if (this.callbacks.onReconnecting) {
+      this.callbacks.onReconnecting(this.reconnectAttempts + 1);
+    }
+
     this.reconnectTimer = setTimeout(() => {
       if (this.sessionId && !this.isManualClose) {
         this.reconnectAttempts++;
         this.connect(this.sessionId, this.callbacks).catch(error => {
           console.error('Reconnection failed:', error);
+          if (this.callbacks.onReconnectFailed) {
+            this.callbacks.onReconnectFailed(this.reconnectAttempts);
+          }
+          // Continue trying to reconnect
+          this.scheduleReconnect();
         });
       }
     }, delay);
+  }
+
+  /**
+   * Start ping timer to monitor connection health
+   */
+  private startPingTimer(): void {
+    this.stopPingTimer();
+
+    this.pingTimer = setInterval(() => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        // Send ping
+        try {
+          this.ws.send('ping');
+          console.log('📍 Ping sent to server');
+
+          // Check if we received a pong within reasonable time
+          setTimeout(() => {
+            const timeSinceLastPong = Date.now() - this.lastPongReceived;
+            if (timeSinceLastPong > this.pingInterval * 2) {
+              console.warn('🚨 No pong received, connection may be stale');
+              // Close connection to trigger reconnection
+              if (this.ws) {
+                this.ws.close();
+              }
+            }
+          }, 5000); // Wait 5 seconds for pong
+        } catch (error) {
+          console.error('Failed to send ping:', error);
+        }
+      }
+    }, this.pingInterval);
+  }
+
+  /**
+   * Stop ping timer
+   */
+  private stopPingTimer(): void {
+    if (this.pingTimer) {
+      clearInterval(this.pingTimer);
+      this.pingTimer = null;
+    }
   }
 
   /**

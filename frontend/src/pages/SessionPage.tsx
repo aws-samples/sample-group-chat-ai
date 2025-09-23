@@ -65,6 +65,9 @@ interface SessionPageState {
   voiceSettings: VoiceSettings | null;
   pendingPersonaResponses: ConversationMessage[];
   currentlySpeakingPersona: string | null;
+  connectionState: string;
+  reconnectAttempts: number;
+  isReconnecting: boolean;
 }
 
 // Helper function to build persona info map from session data
@@ -153,6 +156,9 @@ export const SessionPage: React.FC = () => {
     voiceSettings: null,
     pendingPersonaResponses: [],
     currentlySpeakingPersona: null,
+    connectionState: 'DISCONNECTED',
+    reconnectAttempts: 0,
+    isReconnecting: false,
   });
 
 
@@ -249,6 +255,13 @@ export const SessionPage: React.FC = () => {
         await webSocketService.connect(sessionId, {
           onConnectionEstablished: () => {
             // WebSocket connection established
+            setState(prev => ({
+              ...prev,
+              connectionState: 'CONNECTED',
+              reconnectAttempts: 0,
+              isReconnecting: false,
+              error: null,
+            }));
           },
 
           onPersonaTyping: data => {
@@ -338,14 +351,37 @@ export const SessionPage: React.FC = () => {
 
           onConnectionClosed: () => {
             // WebSocket connection closed
+            setState(prev => ({
+              ...prev,
+              connectionState: 'DISCONNECTED',
+            }));
           },
 
           onConnectionError: () => {
-            // console.error('WebSocket connection error:', error);
             setState(prev => ({
               ...prev,
-              error: 'Connection error. Please refresh the page.',
+              connectionState: 'DISCONNECTED',
+              error: 'Connection error occurred.',
               sendingMessage: false,
+            }));
+          },
+
+          onReconnecting: (attempt: number) => {
+            setState(prev => ({
+              ...prev,
+              connectionState: 'CONNECTING',
+              reconnectAttempts: attempt,
+              isReconnecting: true,
+              error: null,
+            }));
+          },
+
+          onReconnectFailed: (attempt: number) => {
+            setState(prev => ({
+              ...prev,
+              connectionState: 'DISCONNECTED',
+              reconnectAttempts: attempt,
+              isReconnecting: false,
             }));
           },
         });
@@ -445,7 +481,7 @@ export const SessionPage: React.FC = () => {
     if (!webSocketService.isConnected()) {
       setState(prev => ({
         ...prev,
-        error: 'Connection lost. Please refresh the page to reconnect.',
+        error: 'Connection lost. Messages cannot be sent while disconnected.',
       }));
       return;
     }
@@ -589,6 +625,25 @@ export const SessionPage: React.FC = () => {
       SessionScopedStorage.clearSessionId();
     }
     navigate('/');
+  };
+
+  const handleManualReconnect = async () => {
+    try {
+      setState(prev => ({
+        ...prev,
+        error: null,
+        isReconnecting: true,
+        connectionState: 'CONNECTING',
+      }));
+      await webSocketService.reconnect();
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        error: 'Failed to reconnect. Please try again.',
+        isReconnecting: false,
+        connectionState: 'DISCONNECTED',
+      }));
+    }
   };
 
   const handleImageUploaded = (imageAttachment: ImageAttachment) => {
@@ -767,6 +822,28 @@ export const SessionPage: React.FC = () => {
         {/* Business Context Display */}
         {state.session?.businessContext && (
           <BusinessContextDisplay businessContext={state.session.businessContext} />
+        )}
+
+        {/* Connection Status */}
+        {state.connectionState !== 'CONNECTED' && (
+          <Alert
+            type={state.isReconnecting ? 'info' : 'warning'}
+            dismissible={!state.isReconnecting}
+            onDismiss={!state.isReconnecting ? () => setState(prev => ({ ...prev, error: null })) : undefined}
+            action={
+              state.connectionState === 'DISCONNECTED' && !state.isReconnecting ? (
+                <Button onClick={handleManualReconnect} variant='primary'>
+                  Reconnect
+                </Button>
+              ) : null
+            }
+          >
+            {state.isReconnecting
+              ? `Reconnecting... (attempt ${state.reconnectAttempts})`
+              : state.connectionState === 'CONNECTING'
+                ? 'Connecting...'
+                : 'Connection lost. Some features may not work properly.'}
+          </Alert>
         )}
 
         {/* Error Alert */}
@@ -1073,7 +1150,7 @@ export const SessionPage: React.FC = () => {
                 }
                 spellcheck
                 rows={3}
-                disabled={state.sendingMessage}
+                disabled={state.sendingMessage || state.connectionState !== 'CONNECTED'}
                 voiceConfig={voiceConfig}
                 // nosemgrep: i18next-key-format
                 ariaLabel={t('session.input.ariaLabel')}
@@ -1085,7 +1162,7 @@ export const SessionPage: React.FC = () => {
                   onClick={() =>
                     setState(prev => ({ ...prev, showImageUpload: !prev.showImageUpload }))
                   }
-                  disabled={state.sendingMessage}
+                  disabled={state.sendingMessage || state.connectionState !== 'CONNECTED'}
                 >
                   {/* nosemgrep: i18next-key-missing-namespace */}
                   {state.showImageUpload ? t('session.input.hideUpload') :
@@ -1116,7 +1193,7 @@ export const SessionPage: React.FC = () => {
                       setState(prev => ({ ...prev, selectedPersonaForDirectQuestion: detail.id }));
                     }
                   }}
-                  disabled={state.sendingMessage}
+                  disabled={state.sendingMessage || state.connectionState !== 'CONNECTED'}
                 >
                   {state.selectedPersonaForDirectQuestion
                     // nosemgrep: i18next-key-format
@@ -1127,7 +1204,7 @@ export const SessionPage: React.FC = () => {
                 <Button
                   variant='primary'
                   onClick={() => sendMessage(state.selectedPersonaForDirectQuestion || undefined)}
-                  disabled={!state.currentMessage.trim() || state.sendingMessage}
+                  disabled={!state.currentMessage.trim() || state.sendingMessage || state.connectionState !== 'CONNECTED'}
                 >
                   {/* // nosemgrep: i18next-key-format */}
                   {state.sendingMessage ? t('session.input.sending') :

@@ -66,10 +66,19 @@ export class WebSocketController {
         return;
       }
 
-      // Parse message
+      const messageString = data.toString();
+
+      // Handle ping/pong messages
+      if (messageString === 'ping') {
+        logger.debug('Received ping from client', { sessionId });
+        ws.send('pong');
+        return;
+      }
+
+      // Parse JSON message
       let message: WebSocketMessage;
       try {
-        message = JSON.parse(data.toString());
+        message = JSON.parse(messageString);
       } catch {
         logger.warn('Invalid JSON received from WebSocket', { sessionId });
         this.sessionWebSocketManager.sendErrorToSession(

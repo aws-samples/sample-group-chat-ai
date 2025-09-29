@@ -5,7 +5,21 @@ import { Router, Request, Response } from 'express';
 
 const router = Router();
 
-// Health check endpoint
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Basic health check
+ *     description: Returns basic health status of the API
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: Service is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HealthStatus'
+ */
 router.get('/', (req: Request, res: Response) => {
   res.json({
     status: 'healthy',
@@ -15,7 +29,21 @@ router.get('/', (req: Request, res: Response) => {
   });
 });
 
-// Detailed health check
+/**
+ * @swagger
+ * /health/detailed:
+ *   get:
+ *     summary: Detailed health check
+ *     description: Returns detailed health status including memory usage
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: Detailed service health information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/DetailedHealthStatus'
+ */
 router.get('/detailed', (req: Request, res: Response) => {
   const memoryUsage = process.memoryUsage();
 

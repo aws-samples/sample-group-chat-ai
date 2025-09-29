@@ -6,6 +6,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import dotenv from 'dotenv';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
 import { createLogger } from './config/logger';
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
@@ -55,6 +57,13 @@ app.use((req, res, next) => {
 const sessionService = new SessionService();
 const userSessionStorage = new UserSessionStorage();
 
+// API Documentation
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get('/api/openapi.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
+
 // API routes
 app.use('/health', healthRoutes);
 app.use('/api/sessions', createSessionRoutes(sessionService));
@@ -62,7 +71,33 @@ app.use('/api/user-sessions', createUserSessionRoutes(userSessionStorage, sessio
 app.use('/api/personas', personaRoutes);
 app.use('/api/voices', createVoiceRoutes(sessionService));
 
-// Root endpoint
+/**
+ * @swagger
+ * /api:
+ *   get:
+ *     summary: API root endpoint
+ *     description: Returns basic API information and status
+ *     responses:
+ *       200:
+ *         description: API information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 name:
+ *                   type: string
+ *                   example: "AI Multi-Persona Conversation Ochestrator Backend"
+ *                 version:
+ *                   type: string
+ *                   example: "1.0.0"
+ *                 status:
+ *                   type: string
+ *                   example: "running"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ */
 app.get('/api/', (req, res) => {
   res.json({
     name: 'AI Multi-Persona Conversation Ochestrator Backend',

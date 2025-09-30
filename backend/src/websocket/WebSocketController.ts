@@ -109,16 +109,6 @@ export class WebSocketController {
         return;
       }
 
-      // Route message based on type
-      logger.info('DEBUG: Backend WebSocket enum values', {
-        sessionId,
-        messageType: message.type,
-        USER_MESSAGE: WebSocketMessageType.USER_MESSAGE,
-        CONNECTION_ESTABLISHED: WebSocketMessageType.CONNECTION_ESTABLISHED,
-        ERROR: WebSocketMessageType.ERROR,
-        AUDIO_ACKNOWLEDGMENT: WebSocketMessageType.AUDIO_ACKNOWLEDGMENT,
-        fullMessage: JSON.stringify(message).substring(0, 200),
-      });
 
       switch (message.type) {
         case WebSocketMessageType.USER_MESSAGE:

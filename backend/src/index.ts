@@ -31,7 +31,6 @@ const PORT = process.env.PORT || 3000;
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || '*',
     credentials: true,
   })
 );
@@ -107,7 +106,7 @@ app.use('/api/voices', createVoiceRoutes(sessionService));
  */
 app.get('/api/', (req, res) => {
   res.json({
-    name: 'AI Multi-Persona Conversation Ochestrator Backend',
+    name: 'AI Multi-Persona Conversation Orchestrator Backend',
     version: '1.0.0',
     status: 'running',
     timestamp: new Date().toISOString(),

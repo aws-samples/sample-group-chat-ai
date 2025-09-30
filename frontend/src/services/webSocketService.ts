@@ -178,7 +178,6 @@ export class WebSocketService {
       messageId,
       personaId,
       finished: true,
-      timestamp: Date.now(),
     };
 
     const message: WebSocketMessage = {
@@ -231,6 +230,13 @@ export class WebSocketService {
   private handleMessage(event: MessageEvent): void {
     try {
       const message: WebSocketMessage = JSON.parse(event.data);
+
+      console.log('DEBUG: Frontend WebSocket enum values:', {
+        messageType: message.type,
+        CONNECTION_ESTABLISHED: WebSocketMessageType.CONNECTION_ESTABLISHED,
+        ERROR: WebSocketMessageType.ERROR,
+        USER_MESSAGE: WebSocketMessageType.USER_MESSAGE,
+      });
 
       switch (message.type) {
         case WebSocketMessageType.CONNECTION_ESTABLISHED:

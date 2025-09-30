@@ -92,7 +92,14 @@ export class AuthenticatedApiService {
   }
 
   async getSession(sessionId: string): Promise<Session> {
-    return this.request(`/sessions/${sessionId}`);
+    const user = this.getUser();
+    const userId = user?.profile?.sub || user?.profile?.email;
+
+    if (!userId) {
+      throw new Error('User ID not available');
+    }
+
+    return this.request(`/user-sessions/${userId}/${sessionId}`);
   }
 
   async sendMessage(sessionId: string, request: SendMessageRequest): Promise<SendMessageResponse> {

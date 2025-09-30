@@ -54,15 +54,22 @@ app.use((req, res, next) => {
 });
 
 // Create shared service instances
-const sessionService = new SessionService();
 const userSessionStorage = new UserSessionStorage();
+const sessionService = new SessionService(userSessionStorage);
 
-// API Documentation
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// API Documentation with authentication
+const swaggerOptions = {
+  swaggerOptions: {
+    persistAuthorization: true,
+  }
+};
+
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerOptions));
 app.get('/api/openapi.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.send(swaggerSpec);
 });
+
 
 // API routes
 app.use('/health', healthRoutes);
@@ -116,8 +123,8 @@ const server = app.listen(PORT, () => {
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
-// Initialize WebSocket server with shared SessionService
-const webSocketServer = new WebSocketServer(server, sessionService);
+// Initialize WebSocket server with shared SessionService and UserSessionStorage
+const webSocketServer = new WebSocketServer(server, sessionService, userSessionStorage);
 logger.info('WebSocket server initialized on /ws path');
 
 // CRITICAL FIX: Make WebSocket server globally accessible for audio queue processing

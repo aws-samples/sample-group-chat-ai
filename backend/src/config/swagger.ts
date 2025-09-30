@@ -16,11 +16,19 @@ const options = {
     },
     servers: [
       {
-        url: '/api',
+        url: '/',
         description: 'API Server',
       },
     ],
     components: {
+      securitySchemes: {
+        BearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'JWT token from Cognito authentication. You can get this token from your frontend application after logging in.'
+        }
+      },
       schemas: {
         HealthStatus: {
           type: 'object',
@@ -222,6 +230,11 @@ const options = {
       {
         name: 'Voices',
         description: 'Text-to-speech voice management'
+      }
+    ],
+    security: [
+      {
+        BearerAuth: []
       }
     ]
   },

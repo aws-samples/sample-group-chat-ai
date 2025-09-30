@@ -509,12 +509,14 @@ export interface AllPersonasFinishedMessage {
 
 export interface WebSocketErrorMessage {
   error: string;
+  details?: string;
   message: string;
   timestamp: number;
 }
 
 export interface ConnectionEstablishedMessage {
   sessionId: string;
+  timestamp: number;
   connectedAt: number;
 }
 
@@ -551,7 +553,7 @@ export interface AudioAcknowledgmentMessage {
   messageId: string;
   personaId: string;
   finished: boolean;
-  timestamp: number;
+  timestamp?: number;
 }
 
 // Amazon Polly Neural Voice definitions

@@ -223,9 +223,11 @@ export class SessionWebSocketManager {
    * Send connection established message
    */
   private sendConnectionEstablished(sessionId: string): void {
+    const now = Date.now();
     const connectionData: ConnectionEstablishedMessage = {
       sessionId,
-      connectedAt: Date.now(),
+      timestamp: now,
+      connectedAt: now,
     };
 
     const message: WebSocketMessage = {

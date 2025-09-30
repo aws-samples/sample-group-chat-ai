@@ -7,6 +7,7 @@ import { parse as parseUrl } from 'url';
 import { createLogger } from '../config/logger';
 import { WebSocketController } from './WebSocketController';
 import { SessionService } from '../services/SessionService';
+import { UserSessionStorage } from '../services/UserSessionStorage';
 
 const logger = createLogger();
 
@@ -14,8 +15,8 @@ export class WebSocketServer {
   private wss: WebSocket.WebSocketServer;
   private webSocketController: WebSocketController;
 
-  constructor(server: HttpServer, sessionService?: SessionService) {
-    this.webSocketController = new WebSocketController(sessionService);
+  constructor(server: HttpServer, sessionService?: SessionService, userSessionStorage?: UserSessionStorage) {
+    this.webSocketController = new WebSocketController(sessionService, userSessionStorage);
 
     // Create WebSocket server that shares the HTTP server
     this.wss = new WebSocket.WebSocketServer({

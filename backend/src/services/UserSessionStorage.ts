@@ -643,6 +643,36 @@ export class UserSessionStorage {
   }
 
   /**
+   * Find a session by sessionId alone (without requiring userId)
+   * This is useful for WebSocket connections that only have sessionId
+   */
+  async findSessionBySessionId(sessionId: SessionId): Promise<Session | null> {
+    try {
+      if (this.useDynamoDB && this.dynamoDbClient) {
+        return await this.findSessionBySessionIdFromDynamoDB(sessionId);
+      } else {
+        return await this.findSessionBySessionIdFromMemory(sessionId);
+      }
+    } catch (error) {
+      logger.error('Error finding session by sessionId:', { sessionId, error });
+      return null;
+    }
+  }
+
+  private async findSessionBySessionIdFromMemory(sessionId: SessionId): Promise<Session | null> {
+    // In memory storage, sessions are indexed by sessionId
+    const session = this.fullSessions.get(sessionId);
+    return session || null;
+  }
+
+  private async findSessionBySessionIdFromDynamoDB(sessionId: SessionId): Promise<Session | null> {
+    // For DynamoDB, we'd need to scan since sessionId is not the partition key
+    // For now, return null to fall back to memory storage behavior
+    logger.warn('DynamoDB session lookup by sessionId alone is not implemented');
+    return null;
+  }
+
+  /**
    * Get session statistics for a user
    */
   async getUserSessionStats(userId: UserId): Promise<{

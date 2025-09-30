@@ -9,8 +9,23 @@ import { createLogger } from '../config/logger';
 const router = Router();
 const logger = createLogger();
 
-
-// GET /personas - Get all available personas
+/**
+ * @swagger
+ * /api/personas:
+ *   get:
+ *     summary: Get all available personas
+ *     description: Retrieve a list of all available AI personas
+ *     tags: [Personas]
+ *     responses:
+ *       200:
+ *         description: List of available personas
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PersonasResponse'
+ *       500:
+ *         $ref: '#/components/responses/InternalError'
+ */
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     logger.info('Fetching available personas');
@@ -31,7 +46,32 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-// GET /personas/:personaId - Get specific persona details
+/**
+ * @swagger
+ * /api/personas/{personaId}:
+ *   get:
+ *     summary: Get specific persona details
+ *     description: Retrieve detailed information about a specific persona
+ *     tags: [Personas]
+ *     parameters:
+ *       - in: path
+ *         name: personaId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Unique identifier of the persona
+ *     responses:
+ *       200:
+ *         description: Persona details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Persona'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/InternalError'
+ */
 router.get('/:personaId', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { personaId } = req.params;

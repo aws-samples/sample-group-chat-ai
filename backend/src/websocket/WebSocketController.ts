@@ -14,16 +14,19 @@ import {
 import { createLogger } from '../config/logger';
 import { SessionWebSocketManager } from './SessionWebSocketManager';
 import { SessionService } from '../services/SessionService';
+import { UserSessionStorage } from '../services/UserSessionStorage';
 
 const logger = createLogger();
 
 export class WebSocketController {
   private sessionWebSocketManager: SessionWebSocketManager;
   private sessionService: SessionService;
+  private userSessionStorage: UserSessionStorage;
 
-  constructor(sessionService?: SessionService) {
+  constructor(sessionService?: SessionService, userSessionStorage?: UserSessionStorage) {
     this.sessionWebSocketManager = new SessionWebSocketManager();
     this.sessionService = sessionService || new SessionService();
+    this.userSessionStorage = userSessionStorage || new UserSessionStorage();
   }
 
   /**
@@ -31,12 +34,27 @@ export class WebSocketController {
    */
   async handleConnection(ws: WebSocket, sessionId: string): Promise<void> {
     try {
-      // Validate session exists and is active
-      const session = await this.sessionService.getSession(sessionId);
+      // First, try to get session from active SessionService
+      let session = await this.sessionService.getSession(sessionId);
+
+      // If not found in active sessions, check persistent storage
       if (!session) {
-        logger.warn('WebSocket connection attempted for non-existent session', { sessionId });
-        ws.close(1008, 'Session not found');
-        return;
+        logger.info('Session not found in active sessions, checking persistent storage', { sessionId });
+        const storedSession = await this.userSessionStorage.findSessionBySessionId(sessionId);
+
+        if (!storedSession) {
+          logger.warn('WebSocket connection attempted for non-existent session', { sessionId });
+          ws.close(1008, 'Session not found');
+          return;
+        }
+
+        // Restore session to active memory
+        logger.info('Restoring session to active memory for WebSocket connection', {
+          sessionId,
+          userId: storedSession.userId
+        });
+        this.sessionService.restoreSession(storedSession);
+        session = storedSession;
       }
 
       // Register the connection
@@ -91,7 +109,7 @@ export class WebSocketController {
         return;
       }
 
-      // Route message based on type
+
       switch (message.type) {
         case WebSocketMessageType.USER_MESSAGE:
           await this.handleUserMessage(sessionId, message.data as UserMessageWebSocket);

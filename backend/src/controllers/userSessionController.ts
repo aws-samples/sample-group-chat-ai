@@ -22,7 +22,62 @@ export function createUserSessionRoutes(
 ) {
   const router = Router();
 
-  // GET /user-sessions/:userId - Get all sessions for a user
+  /**
+   * @swagger
+   * /api/user-sessions/{userId}:
+   *   get:
+   *     summary: Get user sessions
+   *     description: Retrieve all conversation sessions for a specific user
+   *     tags: [User Sessions]
+   *     parameters:
+   *       - in: path
+   *         name: userId
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Unique identifier of the user
+   *       - in: query
+   *         name: limit
+   *         schema:
+   *           type: integer
+   *           minimum: 1
+   *           maximum: 100
+   *           default: 20
+   *         description: Maximum number of sessions to return
+   *       - in: query
+   *         name: offset
+   *         schema:
+   *           type: integer
+   *           minimum: 0
+   *           default: 0
+   *         description: Number of sessions to skip
+   *       - in: query
+   *         name: status
+   *         schema:
+   *           type: string
+   *           enum: [active, completed, archived]
+   *         description: Filter by session status
+   *     responses:
+   *       200:
+   *         description: User sessions retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 sessions:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                 total:
+   *                   type: integer
+   *                 hasMore:
+   *                   type: boolean
+   *       400:
+   *         $ref: '#/components/responses/ValidationError'
+   *       500:
+   *         $ref: '#/components/responses/InternalError'
+   */
   router.get('/:userId', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { userId } = req.params;
@@ -80,7 +135,68 @@ export function createUserSessionRoutes(
     }
   });
 
-  // GET /user-sessions/:userId/:sessionId - Get specific session for user
+  /**
+   * @swagger
+   * /api/user-sessions/{userId}/{sessionId}:
+   *   get:
+   *     summary: Get specific user session
+   *     description: Retrieve detailed information about a specific conversation session for a user
+   *     tags: [User Sessions]
+   *     parameters:
+   *       - in: path
+   *         name: userId
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Unique identifier of the user
+   *       - in: path
+   *         name: sessionId
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Unique identifier of the session
+   *     responses:
+   *       200:
+   *         description: Session details retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 sessionId:
+   *                   type: string
+   *                 title:
+   *                   type: string
+   *                 userId:
+   *                   type: string
+   *                 activePersonas:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       personaId:
+   *                         type: string
+   *                       name:
+   *                         type: string
+   *                       role:
+   *                         type: string
+   *                 conversationHistory:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                 status:
+   *                   type: string
+   *                 createdAt:
+   *                   type: number
+   *                 updatedAt:
+   *                   type: number
+   *       400:
+   *         $ref: '#/components/responses/ValidationError'
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   *       500:
+   *         $ref: '#/components/responses/InternalError'
+   */
   router.get('/:userId/:sessionId', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { userId, sessionId } = req.params;
@@ -106,7 +222,45 @@ export function createUserSessionRoutes(
     }
   });
 
-  // POST /user-sessions/:userId/:sessionId/resume - Resume a session
+  /**
+   * @swagger
+   * /api/user-sessions/{userId}/{sessionId}/resume:
+   *   post:
+   *     summary: Resume a session
+   *     description: Resume an existing conversation session for a user
+   *     tags: [User Sessions]
+   *     parameters:
+   *       - in: path
+   *         name: userId
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Unique identifier of the user
+   *       - in: path
+   *         name: sessionId
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Unique identifier of the session
+   *     responses:
+   *       200:
+   *         description: Session resumed successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 sessionId:
+   *                   type: string
+   *                 message:
+   *                   type: string
+   *                 resumedAt:
+   *                   type: number
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   *       500:
+   *         $ref: '#/components/responses/InternalError'
+   */
   router.post('/:userId/:sessionId/resume', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { userId, sessionId } = req.params;

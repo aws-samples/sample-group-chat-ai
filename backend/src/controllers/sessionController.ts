@@ -58,7 +58,31 @@ export function createSessionRoutes(sessionService: SessionService) {
     },
   });
 
-  // POST /sessions - Create new conversation session
+  /**
+   * @swagger
+   * /api/sessions:
+   *   post:
+   *     summary: Create new conversation session
+   *     description: Creates a new conversation session with selected AI personas
+   *     tags: [Sessions]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/CreateSessionRequest'
+   *     responses:
+   *       201:
+   *         description: Session created successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/CreateSessionResponse'
+   *       400:
+   *         $ref: '#/components/responses/ValidationError'
+   *       500:
+   *         $ref: '#/components/responses/InternalError'
+   */
   router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const requestData: CreateSessionRequest = req.body;
@@ -95,7 +119,40 @@ export function createSessionRoutes(sessionService: SessionService) {
     }
   });
 
-  // POST /sessions/:sessionId/messages - Send message and get responses
+  /**
+   * @swagger
+   * /api/sessions/{sessionId}/messages:
+   *   post:
+   *     summary: Send message to session
+   *     description: Send a message to the conversation session and get AI responses
+   *     tags: [Sessions]
+   *     parameters:
+   *       - in: path
+   *         name: sessionId
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Unique identifier of the session
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/SendMessageRequest'
+   *     responses:
+   *       200:
+   *         description: Message sent successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/SendMessageResponse'
+   *       400:
+   *         $ref: '#/components/responses/ValidationError'
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   *       500:
+   *         $ref: '#/components/responses/InternalError'
+   */
   router.post('/:sessionId/messages', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { sessionId } = req.params;
@@ -130,7 +187,46 @@ export function createSessionRoutes(sessionService: SessionService) {
     }
   });
 
-  // PUT /sessions/:sessionId/personas - Update session personas
+  /**
+   * @swagger
+   * /api/sessions/{sessionId}/personas:
+   *   put:
+   *     summary: Update session personas
+   *     description: Update the active personas for a conversation session
+   *     tags: [Sessions]
+   *     parameters:
+   *       - in: path
+   *         name: sessionId
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Unique identifier of the session
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               selectedPersonas:
+   *                 type: array
+   *                 items:
+   *                   type: string
+   *                 description: Array of persona IDs to activate
+   *     responses:
+   *       200:
+   *         description: Personas updated successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/UpdateSessionPersonasResponse'
+   *       400:
+   *         $ref: '#/components/responses/ValidationError'
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   *       500:
+   *         $ref: '#/components/responses/InternalError'
+   */
   router.put('/:sessionId/personas', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { sessionId } = req.params;
@@ -163,7 +259,39 @@ export function createSessionRoutes(sessionService: SessionService) {
     }
   });
 
-  // DELETE /sessions/:sessionId/personas - Reset session personas to defaults
+  /**
+   * @swagger
+   * /api/sessions/{sessionId}/personas:
+   *   delete:
+   *     summary: Reset session personas to defaults
+   *     description: Reset the session personas to the default selection
+   *     tags: [Sessions]
+   *     parameters:
+   *       - in: path
+   *         name: sessionId
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Unique identifier of the session
+   *     responses:
+   *       200:
+   *         description: Personas reset successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 sessionId:
+   *                   type: string
+   *                 message:
+   *                   type: string
+   *                 updatedAt:
+   *                   type: number
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   *       500:
+   *         $ref: '#/components/responses/InternalError'
+   */
   router.delete('/:sessionId/personas', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { sessionId } = req.params;
@@ -187,7 +315,47 @@ export function createSessionRoutes(sessionService: SessionService) {
     }
   });
 
-  // GET /sessions/:sessionId/summary - Get session summary
+  /**
+   * @swagger
+   * /api/sessions/{sessionId}/summary:
+   *   get:
+   *     summary: Get session summary
+   *     description: Generate an AI-powered summary of the conversation session
+   *     tags: [Sessions]
+   *     parameters:
+   *       - in: path
+   *         name: sessionId
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Unique identifier of the session
+   *     responses:
+   *       200:
+   *         description: Session summary generated successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 sessionId:
+   *                   type: string
+   *                 summary:
+   *                   type: string
+   *                 keyInsights:
+   *                   type: array
+   *                   items:
+   *                     type: string
+   *                 recommendations:
+   *                   type: array
+   *                   items:
+   *                     type: string
+   *                 generatedAt:
+   *                   type: number
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   *       500:
+   *         $ref: '#/components/responses/InternalError'
+   */
   router.get('/:sessionId/summary', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { sessionId } = req.params;
@@ -212,7 +380,28 @@ export function createSessionRoutes(sessionService: SessionService) {
     }
   });
 
-  // DELETE /sessions/:sessionId - End session
+  /**
+   * @swagger
+   * /api/sessions/{sessionId}:
+   *   delete:
+   *     summary: End session
+   *     description: End and clean up a conversation session
+   *     tags: [Sessions]
+   *     parameters:
+   *       - in: path
+   *         name: sessionId
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Unique identifier of the session
+   *     responses:
+   *       204:
+   *         description: Session ended successfully
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   *       500:
+   *         $ref: '#/components/responses/InternalError'
+   */
   router.delete('/:sessionId', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { sessionId } = req.params;
@@ -477,7 +666,6 @@ export function createSessionRoutes(sessionService: SessionService) {
     voiceController.updateVoiceSettings.bind(voiceController)
   );
 
-  // GET /sessions/:sessionId - Get session details
   router.get('/:sessionId', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { sessionId } = req.params;

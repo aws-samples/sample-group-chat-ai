@@ -41,11 +41,11 @@ export class SessionService {
   private userSessionStorage: UserSessionStorage;
   private titleGenerator: SessionTitleGenerator;
 
-  constructor() {
+  constructor(userSessionStorage?: UserSessionStorage) {
     this.personaManager = new PersonaManager();
     this.llmService = SharedServices.getLLMService();
     this.conversationOrchestrator = SharedServices.getConversationOrchestrator();
-    this.userSessionStorage = new UserSessionStorage();
+    this.userSessionStorage = userSessionStorage || new UserSessionStorage();
     this.titleGenerator = new SessionTitleGenerator();
 
     // Start cleanup process

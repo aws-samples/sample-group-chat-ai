@@ -6,6 +6,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import dotenv from 'dotenv';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
 import { createLogger } from './config/logger';
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
@@ -29,7 +31,6 @@ const PORT = process.env.PORT || 3000;
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || '*',
     credentials: true,
   })
 );
@@ -52,8 +53,22 @@ app.use((req, res, next) => {
 });
 
 // Create shared service instances
-const sessionService = new SessionService();
 const userSessionStorage = new UserSessionStorage();
+const sessionService = new SessionService(userSessionStorage);
+
+// API Documentation with authentication
+const swaggerOptions = {
+  swaggerOptions: {
+    persistAuthorization: true,
+  }
+};
+
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerOptions));
+app.get('/api/openapi.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
+
 
 // API routes
 app.use('/health', healthRoutes);
@@ -62,10 +77,36 @@ app.use('/api/user-sessions', createUserSessionRoutes(userSessionStorage, sessio
 app.use('/api/personas', personaRoutes);
 app.use('/api/voices', createVoiceRoutes(sessionService));
 
-// Root endpoint
+/**
+ * @swagger
+ * /api:
+ *   get:
+ *     summary: API root endpoint
+ *     description: Returns basic API information and status
+ *     responses:
+ *       200:
+ *         description: API information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 name:
+ *                   type: string
+ *                   example: "AI Multi-Persona Conversation Ochestrator Backend"
+ *                 version:
+ *                   type: string
+ *                   example: "1.0.0"
+ *                 status:
+ *                   type: string
+ *                   example: "running"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ */
 app.get('/api/', (req, res) => {
   res.json({
-    name: 'AI Multi-Persona Conversation Ochestrator Backend',
+    name: 'AI Multi-Persona Conversation Orchestrator Backend',
     version: '1.0.0',
     status: 'running',
     timestamp: new Date().toISOString(),
@@ -81,8 +122,8 @@ const server = app.listen(PORT, () => {
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
-// Initialize WebSocket server with shared SessionService
-const webSocketServer = new WebSocketServer(server, sessionService);
+// Initialize WebSocket server with shared SessionService and UserSessionStorage
+const webSocketServer = new WebSocketServer(server, sessionService, userSessionStorage);
 logger.info('WebSocket server initialized on /ws path');
 
 // CRITICAL FIX: Make WebSocket server globally accessible for audio queue processing

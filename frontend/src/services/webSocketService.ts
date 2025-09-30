@@ -178,6 +178,7 @@ export class WebSocketService {
       messageId,
       personaId,
       finished: true,
+      timestamp: Date.now(),
     };
 
     const message: WebSocketMessage = {

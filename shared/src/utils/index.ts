@@ -2,14 +2,29 @@
 
 import { VALIDATION_LIMITS, SESSION_CONFIG } from '../constants';
 import { SessionStatus, MessageSender } from '../types';
-import * as crypto from 'crypto';
+
+// Universal random hex string generator (no Node.js crypto dependency)
+function getRandomHex(bytes: number): string {
+  if (typeof globalThis !== 'undefined' && globalThis.crypto?.getRandomValues) {
+    const array = new Uint8Array(bytes);
+    globalThis.crypto.getRandomValues(array);
+    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  // Fallback to Math.random (works everywhere, less secure but sufficient for IDs)
+  const randomBytes: number[] = [];
+  for (let i = 0; i < bytes; i++) {
+    randomBytes.push(Math.floor(Math.random() * 256));
+  }
+  return randomBytes.map(byte => byte.toString(16).padStart(2, '0')).join('');
+}
 
 /**
  * Generate a unique session ID
  */
 export function generateSessionId(): string {
   // Use 16 bytes (128 bits) for strong uniqueness and unpredictability
-  const randomPart = crypto.randomBytes(16).toString('hex');
+  const randomPart = getRandomHex(16);
   return `session_${Date.now()}_${randomPart}`;
 }
 
@@ -17,7 +32,7 @@ export function generateSessionId(): string {
  * Generate a unique message ID
  */
 export function generateMessageId(): string {
-  const randomPart = crypto.randomBytes(16).toString('hex');
+  const randomPart = getRandomHex(16);
   return `msg_${Date.now()}_${randomPart}`;
 }
 
@@ -25,7 +40,7 @@ export function generateMessageId(): string {
  * Generate a unique document ID
  */
 export function generateDocumentId(): string {
-  const randomPart = crypto.randomBytes(16).toString('hex');
+  const randomPart = getRandomHex(16);
   return `doc_${Date.now()}_${randomPart}`;
 }
 

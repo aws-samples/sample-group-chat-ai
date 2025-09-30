@@ -298,12 +298,17 @@ export const SessionPage: React.FC = () => {
 
                 // Update session in sessionStorage with the new messages array
                 if (prev.session) {
-                  const updatedSession = {
-                    ...prev.session,
-                    conversationHistory: newMessages,
-                    lastActivity: Date.now(),
-                  };
-                  sessionStorage.setItem(`session-${sessionId}`, JSON.stringify(updatedSession));
+                  try {
+                    const updatedSession = {
+                      ...prev.session,
+                      conversationHistory: newMessages,
+                      lastActivity: Date.now(),
+                    };
+                    sessionStorage.setItem(`session-${sessionId}`, JSON.stringify(updatedSession));
+                  } catch (storageError) {
+                    console.error('Failed to update sessionStorage for persona response:', storageError);
+                    // Continue even if storage fails - the message was received successfully
+                  }
                 }
 
                 return {
@@ -400,12 +405,17 @@ export const SessionPage: React.FC = () => {
 
             // Update session in sessionStorage
             if (prev.session && sessionId) {
-              const updatedSession = {
-                ...prev.session,
-                conversationHistory: newMessages,
-                lastActivity: Date.now(),
-              };
-              sessionStorage.setItem(`session-${sessionId}`, JSON.stringify(updatedSession));
+              try {
+                const updatedSession = {
+                  ...prev.session,
+                  conversationHistory: newMessages,
+                  lastActivity: Date.now(),
+                };
+                sessionStorage.setItem(`session-${sessionId}`, JSON.stringify(updatedSession));
+              } catch (storageError) {
+                console.error('Failed to update sessionStorage for audio sync:', storageError);
+                // Continue even if storage fails - the message is being displayed
+              }
             }
 
             return {
@@ -485,12 +495,17 @@ export const SessionPage: React.FC = () => {
 
         // Update session in sessionStorage with the new messages array
         if (prev.session) {
-          const updatedSession = {
-            ...prev.session,
-            conversationHistory: newMessages,
-            lastActivity: Date.now(),
-          };
-          sessionStorage.setItem(`session-${sessionId}`, JSON.stringify(updatedSession));
+          try {
+            const updatedSession = {
+              ...prev.session,
+              conversationHistory: newMessages,
+              lastActivity: Date.now(),
+            };
+            sessionStorage.setItem(`session-${sessionId}`, JSON.stringify(updatedSession));
+          } catch (storageError) {
+            console.error('Failed to update sessionStorage:', storageError);
+            // Continue even if storage fails - the message was sent successfully
+          }
         }
 
         return {
@@ -503,8 +518,8 @@ export const SessionPage: React.FC = () => {
       });
 
       // Note: sendingMessage will be set to false when we receive the "all_personas_finished" message
-    } catch {
-      // console.error('Failed to send message:', error);
+    } catch (error) {
+      console.error('Failed to send message:', error);
       setState(prev => ({
         ...prev,
         error: 'Failed to send message. Please try again.',

@@ -734,6 +734,23 @@ export class SessionService {
   }
 
   /**
+   * Update an existing session
+   */
+  async updateSession(session: Session): Promise<void> {
+    this.sessions.set(session.sessionId, session);
+
+    // Update session in persistent storage if userId exists
+    if (session.userId) {
+      await this.userSessionStorage.updateSession(session.userId, session);
+    }
+
+    logger.info('Session updated', {
+      sessionId: session.sessionId,
+      hasFiles: !!session.fileContexts && Object.keys(session.fileContexts).length > 0,
+    });
+  }
+
+  /**
    * Restores a session to active memory for resuming
    */
   restoreSession(session: Session): void {

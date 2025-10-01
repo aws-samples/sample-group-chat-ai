@@ -4,13 +4,14 @@
 import {
   Persona,
   ConversationMessage,
-  
+
   MessageSender,
   LLMConfig,
   ServiceException,
   withTimeout,
   ConversationTopic,
   ImageAttachment,
+  Session,
 } from '@group-chat-ai/shared';
 import { createLogger } from '../config/logger';
 import { ModelConfig } from '../config/ModelConfig';
@@ -18,6 +19,7 @@ import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
 import axios from 'axios';
+import { ContextManagementService } from './ContextManagementService';
 
 const logger = createLogger();
 
@@ -28,9 +30,11 @@ export class LLMService {
   private bedrockClient?: BedrockRuntimeClient;
   private configLoaded: Promise<void>;
   private modelConfig: ModelConfig;
+  private contextManagementService: ContextManagementService;
 
   constructor() {
     this.modelConfig = ModelConfig.getInstance();
+    this.contextManagementService = new ContextManagementService();
 
     // Initialize with defaults first - models will be loaded from ModelConfig
     this.config = {
@@ -176,7 +180,8 @@ export class LLMService {
       description: string;
     }>,
     imageAttachment?: ImageAttachment,
-    conversationLanguage?: string
+    conversationLanguage?: string,
+    session?: Session
   ): Promise<string> {
     try {
       // Ensure configuration is loaded from Parameter Store
@@ -194,6 +199,26 @@ export class LLMService {
       // Build context from conversation history with persona names (not IDs)
       const context = this.buildConversationContext(conversationHistory, personaMapping);
 
+      // Get file context for this persona if session is provided
+      let fileContextStr = '';
+      if (session) {
+        const selectedFiles = await this.contextManagementService.selectFileContextForPersona(
+          session,
+          persona.personaId,
+          conversationHistory,
+          persona.promptTemplate?.length || 0
+        );
+
+        if (selectedFiles.length > 0) {
+          fileContextStr = this.contextManagementService.formatFileContextForPrompt(selectedFiles);
+          logger.info('File context added to prompt', {
+            personaId: persona.personaId,
+            filesCount: selectedFiles.length,
+            totalTokens: selectedFiles.reduce((sum, f) => sum + f.totalTokens, 0),
+          });
+        }
+      }
+
       // Create persona-specific prompt with persona awareness and image context
       const prompt = this.buildPersonaPrompt(
         persona,
@@ -202,7 +227,8 @@ export class LLMService {
         conversationTopic,
         otherActivePersonas,
         imageAttachment,
-        conversationLanguage
+        conversationLanguage,
+        fileContextStr
       );
 
       // Generate response with timeout (use vision-capable call if image present)
@@ -404,7 +430,8 @@ Focus on presentation performance analysis rather than just summarizing what was
       description: string;
     }>,
     imageAttachment?: ImageAttachment,
-    conversationLanguage?: string
+    conversationLanguage?: string,
+    fileContext?: string
   ): string {
 
     // Format the scenario if provided
@@ -439,7 +466,7 @@ ${conversationTopicStr}
 
 `
     : ''
-}${imageContextStr}CONVERSATION HISTORY:
+}${imageContextStr}${fileContext || ''}CONVERSATION HISTORY:
 ${context}
 
 LATEST MESSAGE: "${userMessage}"
@@ -450,7 +477,7 @@ Please respond as ${persona.name} (${persona.role}) with a thoughtful, realistic
 3. Provides constructive feedback or concerns
 4. Keeps the response concise (2-3 sentences maximum)
 5. Be aware of who else is present in this meeting and can reference them appropriately
-${conversationTopicStr ? '6. Consider the specific conversation topic context provided above' : ''}${imageAttachment ? '7. Analyze and comment on any image provided - this could be a slide, document, or visual aid' : ''}${conversationLanguage && conversationLanguage !== 'en' ? `8. CRITICAL: Respond entirely in ${this.getLanguageName(conversationLanguage)} language` : ''}
+${conversationTopicStr ? '6. Consider the specific conversation topic context provided above' : ''}${imageAttachment ? '7. Analyze and comment on any image provided - this could be a slide, document, or visual aid' : ''}${fileContext ? '8. Reference and utilize the contextual knowledge from uploaded files when relevant to the discussion' : ''}${conversationLanguage && conversationLanguage !== 'en' ? `9. CRITICAL: Respond entirely in ${this.getLanguageName(conversationLanguage)} language` : ''}
 
 IMPORTANT: If you see "RESPONSES SO FAR IN THIS TURN" above, these are responses from other meeting participants to the SAME user request. You should acknowledge and build upon these responses where appropriate, rather than waiting for others to respond.
 

@@ -43,7 +43,6 @@ import { VoiceSettings as VoiceSettingsComponent } from '../components/VoiceSett
 import { audioService } from '../services/AudioService';
 import { SpeakingIndicator } from '../components/SpeakingIndicator';
 import { FileUploadManager } from '../components/FileUploadManager';
-import { PersonaTileData } from '../components/PersonaTile';
 import { useTranslation } from 'react-i18next';
 
 interface SessionPageState {
@@ -759,12 +758,20 @@ export const SessionPage: React.FC = () => {
         {sessionId && state.session && state.fileUploadExpanded && (
           <FileUploadManager
             sessionId={sessionId}
-            availablePersonas={state.session.activePersonas.map(personaId => ({
-              personaId,
-              name: getPersonaNameWithCustom(personaId, state.personaInfoMap),
-              role: getPersonaRoleWithCustom(personaId, state.personaInfoMap),
-              avatarId: getPersonaAvatarWithCustom(personaId, state.session),
-            }))}
+            availablePersonas={state.session.activePersonas.map(personaId => {
+              const personaInfo = state.personaInfoMap[personaId];
+              const customPersona = state.session?.customPersonas?.[personaId];
+              return {
+                personaId,
+                name: getPersonaNameWithCustom(personaId, state.personaInfoMap),
+                role: getPersonaRoleWithCustom(personaId, state.personaInfoMap),
+                details: customPersona?.details || personaInfo?.description || '',
+                avatarId: getPersonaAvatarWithCustom(personaId, state.session),
+                voiceId: state.voiceSettings?.personaVoices?.[personaId],
+                isCustom: !!customPersona,
+                isSelected: true,
+              };
+            })}
             onFilesUpdated={() => {
               // Optionally reload session or show notification
               console.log('Files updated for session', sessionId);

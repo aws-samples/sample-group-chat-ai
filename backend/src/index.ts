@@ -16,6 +16,7 @@ import { createUserSessionRoutes } from './controllers/userSessionController';
 import { personaRoutes } from './controllers/personaController';
 import { healthRoutes } from './controllers/healthController';
 import { createVoiceRoutes } from './controllers/voiceRoutes';
+import { createFileRoutes } from './controllers/fileController';
 import { WebSocketServer } from './websocket/WebSocketServer';
 import { SessionService } from './services/SessionService';
 import { UserSessionStorage } from './services/UserSessionStorage';
@@ -73,6 +74,7 @@ app.get('/api/openapi.json', (req, res) => {
 // API routes
 app.use('/health', healthRoutes);
 app.use('/api/sessions', createSessionRoutes(sessionService));
+app.use('/api/sessions', createFileRoutes(sessionService));
 app.use('/api/user-sessions', createUserSessionRoutes(userSessionStorage, sessionService));
 app.use('/api/personas', personaRoutes);
 app.use('/api/voices', createVoiceRoutes(sessionService));

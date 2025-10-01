@@ -494,6 +494,28 @@ export class UserSessionStorage {
   }
 
   /**
+   * Update entire session
+   */
+  async updateSession(userId: UserId, session: Session): Promise<void> {
+    try {
+      if (this.useDynamoDB && this.dynamoDbClient) {
+        await this.storeSessionInDynamoDB(session);
+      } else {
+        this.fullSessions.set(session.sessionId, session);
+      }
+
+      logger.info('Session updated', {
+        userId,
+        sessionId: session.sessionId,
+        storage: this.useDynamoDB && this.dynamoDbClient ? 'DynamoDB' : 'memory'
+      });
+    } catch (error) {
+      logger.error('Error updating session:', error);
+      throw new ServiceException('Failed to update session', error as Error);
+    }
+  }
+
+  /**
    * Update session title
    */
   async updateSessionTitle(userId: UserId, sessionId: SessionId, title: string): Promise<void> {
@@ -504,11 +526,11 @@ export class UserSessionStorage {
         await this.updateSessionTitleInMemory(userId, sessionId, title);
       }
 
-      logger.info('Session title updated', { 
-        userId, 
-        sessionId, 
-        title, 
-        storage: this.useDynamoDB && this.dynamoDbClient ? 'DynamoDB' : 'memory' 
+      logger.info('Session title updated', {
+        userId,
+        sessionId,
+        title,
+        storage: this.useDynamoDB && this.dynamoDbClient ? 'DynamoDB' : 'memory'
       });
     } catch (error) {
       logger.error('Error updating session title:', error);

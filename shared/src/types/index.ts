@@ -19,6 +19,9 @@ export interface Session {
   conversationLanguage?: string; // Language for AI responses and voice synthesis
   isResumable?: boolean; // Whether session can be resumed
   totalMessages?: number; // Count of user + persona messages
+  fileContexts?: Record<string, FileContext>; // fileId -> FileContext
+  personaFileAssociations?: Record<string, string[]>; // personaId -> fileIds
+  globalFileIds?: string[]; // Files available to all personas
 }
 
 export interface BusinessContext {
@@ -175,6 +178,80 @@ export interface DocumentLink {
   fileType: string;
   uploadedAt: number;
   content?: string;
+}
+
+// File context types for persona-isolated knowledge
+export interface FileContext {
+  fileId: string;
+  sessionId: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  uploadedAt: number;
+  uploadedBy?: string;
+  s3Key: string;
+  extractedText?: string;
+  chunks?: FileChunk[];
+  associatedPersonas: string[]; // Empty array = global/shared
+  tokenCount?: number;
+  processingStatus: FileProcessingStatus;
+  errorMessage?: string;
+}
+
+export interface FileChunk {
+  chunkId: string;
+  chunkIndex: number;
+  content: string;
+  tokenCount: number;
+  startOffset: number;
+  endOffset: number;
+}
+
+export enum FileProcessingStatus {
+  PENDING = 'pending',
+  PROCESSING = 'processing',
+  COMPLETED = 'completed',
+  FAILED = 'failed'
+}
+
+// File upload request/response types
+export interface UploadFileRequest {
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  targetPersonas?: string[]; // If empty/undefined, file is shared globally
+}
+
+export interface UploadFileResponse {
+  fileId: string;
+  uploadUrl: string; // Presigned S3 URL
+  expiresIn: number; // Seconds until URL expires
+  s3Key: string;
+}
+
+export interface CompleteFileUploadRequest {
+  fileId: string;
+}
+
+export interface CompleteFileUploadResponse {
+  fileContext: FileContext;
+  success: boolean;
+  message?: string;
+}
+
+export interface UpdateFileAssociationsRequest {
+  personaIds?: string[]; // undefined means keep current
+  isGlobal?: boolean; // true = available to all personas
+}
+
+export interface UpdateFileAssociationsResponse {
+  fileContext: FileContext;
+  success: boolean;
+}
+
+export interface ListFilesResponse {
+  files: FileContext[];
+  total: number;
 }
 
 export interface ImageAttachment {
@@ -751,6 +828,7 @@ export type SessionId = string;
 export type MessageId = string;
 export type DocumentId = string;
 export type UserId = string;
+export type FileId = string;
 
 // Type guards
 

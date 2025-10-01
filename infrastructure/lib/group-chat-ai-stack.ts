@@ -81,6 +81,95 @@ export class GroupChatAIStack extends cdk.Stack {
       projectionType: dynamodb.ProjectionType.ALL,
     });
 
+    // Create DynamoDB table for file metadata
+    const fileMetadataTable = new dynamodb.Table(this, 'FileMetadataTable', {
+      partitionKey: {
+        name: 'sessionId',
+        type: dynamodb.AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'fileId',
+        type: dynamodb.AttributeType.STRING,
+      },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      encryption: dynamodb.TableEncryption.AWS_MANAGED,
+      pointInTimeRecoverySpecification: {
+        pointInTimeRecoveryEnabled: true,
+        recoveryPeriodInDays: 30,
+      },
+      removalPolicy: environment === 'prod' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+      timeToLiveAttribute: 'ttl',
+    });
+
+    // Add GSI for querying files by persona
+    fileMetadataTable.addGlobalSecondaryIndex({
+      indexName: 'PersonaFilesIndex',
+      partitionKey: {
+        name: 'sessionId',
+        type: dynamodb.AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'uploadedAt',
+        type: dynamodb.AttributeType.NUMBER,
+      },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
+
+    // Create S3 bucket for access logs
+    const fileStorageLogsBucket = new s3.Bucket(this, 'FileStorageLogsBucket', {
+      bucketName: `group-chat-ai-files-logs-${environment}-${this.account}`,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      enforceSSL: true,
+      removalPolicy: environment === 'prod' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: environment !== 'prod',
+      lifecycleRules: [
+        {
+          id: 'DeleteOldLogs',
+          enabled: true,
+          expiration: cdk.Duration.days(90),
+        },
+      ],
+    });
+
+    // Suppress CDK Nag for logs bucket - logs bucket itself doesn't need access logging
+    NagSuppressions.addResourceSuppressions(fileStorageLogsBucket, [
+      {
+        id: 'AwsSolutions-S1',
+        reason: 'This bucket is used for access logs only and does not require its own access logging to prevent recursive logging',
+      },
+    ]);
+
+    // Create S3 bucket for file storage
+    const fileStorageBucket = new s3.Bucket(this, 'FileStorageBucket', {
+      bucketName: `group-chat-ai-files-${environment}-${this.account}`,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      versioned: true,
+      serverAccessLogsBucket: fileStorageLogsBucket,
+      serverAccessLogsPrefix: 'file-storage-logs/',
+      lifecycleRules: [
+        {
+          id: 'DeleteOldFiles',
+          enabled: true,
+          expiration: cdk.Duration.days(90),
+          noncurrentVersionExpiration: cdk.Duration.days(30),
+        },
+      ],
+      enforceSSL: true,
+      removalPolicy: environment === 'prod' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: environment !== 'prod',
+    });
+
+    // Add CORS configuration for file uploads
+    fileStorageBucket.addCorsRule({
+      allowedMethods: [s3.HttpMethods.GET, s3.HttpMethods.PUT, s3.HttpMethods.POST, s3.HttpMethods.HEAD],
+      allowedOrigins: ['*'], // Will be restricted to frontend domain in production
+      allowedHeaders: ['*'],
+      exposedHeaders: ['ETag'],
+      maxAge: 3000,
+    });
+
     // Create Cognito User Pool
     this.userPool = new cognito.UserPool(this, 'GroupChatAIUserPool', {
       userPoolName: `group-chat-ai-${environment}`,
@@ -289,33 +378,70 @@ export class GroupChatAIStack extends cdk.Stack {
       resources: [
         this.userSessionsTable.tableArn,
         `${this.userSessionsTable.tableArn}/index/*`,
+        fileMetadataTable.tableArn,
+        `${fileMetadataTable.tableArn}/index/*`,
       ],
     });
     taskRole.addToPolicy(dynamodbPolicyStatement);
 
-    // Suppress CDK Nag for legitimate Polly and Bedrock wildcard usage
-    NagSuppressions.addResourceSuppressions(taskRole, [
-      {
-        id: 'AwsSolutions-IAM5',
-        reason: 'Polly SynthesizeSpeech requires wildcard resource as it is not resource-specific by AWS design',
-        appliesTo: ['Resource::*'],
-      },
-      {
-        id: 'AwsSolutions-IAM5',
-        reason: 'Bedrock foundation models require wildcard access as specific model ARNs are not predictable and AWS Bedrock service design requires wildcard for foundation-model access',
-        appliesTo: [`Resource::arn:aws:bedrock:*`],
-      },
-      {
-        id: 'AwsSolutions-IAM5',
-        reason: 'Bedrock inference profiles require wildcard access as profile ARNs are dynamically generated and AWS Bedrock service design requires wildcard for inference-profile access',
-        appliesTo: [`Resource::arn:aws:bedrock:${this.region}:${this.account}:inference-profile/*`],
-      },
-      {
-        id: 'AwsSolutions-IAM5',
-        reason: 'Full access to user session table and index',
-        appliesTo: ['Resource::<UserSessionsTable6F92E803.Arn>/index/*', 'Resource::<UserSessionsTable6F92E803.Arn>']
-      }
-    ], true);
+    // Add permissions for S3 file storage
+    const s3PolicyStatement = new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        's3:GetObject',
+        's3:PutObject',
+        's3:DeleteObject',
+        's3:ListBucket',
+      ],
+      resources: [
+        fileStorageBucket.bucketArn,
+        `${fileStorageBucket.bucketArn}/*`,
+      ],
+    });
+    taskRole.addToPolicy(s3PolicyStatement);
+
+    // Suppress CDK Nag for legitimate Polly, Bedrock, DynamoDB and S3 wildcard usage - must apply to children (DefaultPolicy)
+    NagSuppressions.addResourceSuppressions(
+      taskRole,
+      [
+        {
+          id: 'AwsSolutions-IAM5',
+          reason: 'Polly SynthesizeSpeech requires wildcard resource as it is not resource-specific by AWS design',
+          appliesTo: ['Resource::*'],
+        },
+        {
+          id: 'AwsSolutions-IAM5',
+          reason: 'Bedrock foundation models require wildcard access as specific model ARNs are not predictable and AWS Bedrock service design requires wildcard for foundation-model access',
+          appliesTo: [`Resource::arn:aws:bedrock:*`],
+        },
+        {
+          id: 'AwsSolutions-IAM5',
+          reason: 'Bedrock inference profiles require wildcard access as profile ARNs are dynamically generated and AWS Bedrock service design requires wildcard for inference-profile access',
+          appliesTo: [`Resource::arn:aws:bedrock:${this.region}:${this.account}:inference-profile/*`],
+        },
+        {
+          id: 'AwsSolutions-IAM5',
+          reason: 'Full access to user session table and index',
+          appliesTo: ['Resource::<UserSessionsTable6F92E803.Arn>/index/*', 'Resource::<UserSessionsTable6F92E803.Arn>']
+        },
+        {
+          id: 'AwsSolutions-IAM5',
+          reason: 'Full access to file metadata table and index - GSI requires wildcard access pattern for query operations',
+          appliesTo: [
+            'Resource::<FileMetadataTableE69EBE66.Arn>/index/*',
+          ]
+        },
+        {
+          id: 'AwsSolutions-IAM5',
+          reason: 'S3 bucket access required for file upload functionality - wildcard needed for user-generated file paths within the dedicated file storage bucket',
+          appliesTo: [
+            'Resource::<FileStorageBucket10E371B0.Arn>/*',
+          ]
+        }
+      ],
+      true
+    );
+
 
 
 
@@ -456,6 +582,8 @@ export class GroupChatAIStack extends cdk.Stack {
           LLM_TIMEOUT: '10000',
           AWS_REGION: this.region,
           USER_SESSIONS_TABLE: this.userSessionsTable.tableName,
+          FILE_METADATA_TABLE: fileMetadataTable.tableName,
+          FILE_STORAGE_BUCKET: fileStorageBucket.bucketName,
           // Parameter Store parameter names for runtime lookup
           LLM_PROVIDER_PARAM: `/group-chat-ai/${environment}/llm-provider`,
           LLM_MODEL_PARAM: `/group-chat-ai/${environment}/persona-model`,
@@ -656,5 +784,20 @@ export class GroupChatAIStack extends cdk.Stack {
       description: `Cognito OIDC Issuer URL for GroupChatAI ${environment} environment`,
       tier: ssm.ParameterTier.STANDARD,
     });
+
+    // Apply stack-level NAG suppressions for file storage IAM wildcards
+    // These must be applied at the stack level because the DefaultPolicy is auto-generated
+    NagSuppressions.addStackSuppressions(this, [
+      {
+        id: 'AwsSolutions-IAM5',
+        reason: 'Full access to file metadata table and index - GSI requires wildcard access pattern for query operations',
+        appliesTo: ['Resource::<FileMetadataTableE69EBE66.Arn>/index/*']
+      },
+      {
+        id: 'AwsSolutions-IAM5',
+        reason: 'S3 bucket access required for file upload functionality - wildcard needed for user-generated file paths within the dedicated file storage bucket',
+        appliesTo: ['Resource::<FileStorageBucket10E371B0.Arn>/*']
+      }
+    ]);
   }
 }

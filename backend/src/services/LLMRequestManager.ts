@@ -4,7 +4,7 @@
 import { createLogger } from '../config/logger';
 import { LLMService } from './LLMService';
 import { SharedServices } from './SharedServices';
-import { Persona, ConversationMessage,  BusinessContext, ConversationTopic, ImageAttachment } from '@group-chat-ai/shared';
+import { Persona, ConversationMessage,  BusinessContext, ConversationTopic, ImageAttachment, Session } from '@group-chat-ai/shared';
 
 const logger = createLogger();
 
@@ -23,6 +23,7 @@ interface QueuedRequest {
   }>;
   imageAttachment?: ImageAttachment;
   conversationLanguage?: string;
+  session?: Session;
   resolve: (response: string) => void;
   reject: (error: Error) => void;
   timestamp: number;
@@ -57,7 +58,7 @@ export class LLMRequestManager {
     persona: Persona,
     conversationHistory: ConversationMessage[],
     userMessage: string,
-     
+
     conversationTopic?: ConversationTopic,
     otherActivePersonas?: Array<{
       personaId: string;
@@ -67,7 +68,8 @@ export class LLMRequestManager {
     }>,
     imageAttachment?: ImageAttachment,
     routingMode: 'parallel' | 'iterative' = 'parallel',
-    conversationLanguage?: string
+    conversationLanguage?: string,
+    session?: Session
   ): Promise<string> {
     return new Promise((resolve, reject) => {
       const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -81,6 +83,7 @@ export class LLMRequestManager {
         otherActivePersonas,
         imageAttachment,
         conversationLanguage,
+        session,
         resolve,
         reject,
         timestamp: Date.now(),
@@ -170,7 +173,8 @@ export class LLMRequestManager {
         request.conversationTopic,
         request.otherActivePersonas,
         request.imageAttachment,
-        request.conversationLanguage
+        request.conversationLanguage,
+        request.session
       );
 
       request.resolve(response);

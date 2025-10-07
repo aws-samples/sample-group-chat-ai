@@ -369,6 +369,16 @@ export function createFileRoutes(sessionService: SessionService) {
         const { sessionId, fileId } = req.params;
         const updateRequest: UpdateFileAssociationsRequest = req.body;
 
+        // Prevent prototype pollution via dangerous fileId values
+        if (
+          fileId === '__proto__' ||
+          fileId === 'constructor' ||
+          fileId === 'prototype'
+        ) {
+          res.status(400).json({ error: 'Invalid fileId value.' });
+          return;
+        }
+
         logger.info('Updating file associations', {
           sessionId,
           fileId,

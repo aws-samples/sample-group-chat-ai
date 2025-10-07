@@ -168,20 +168,7 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
     }
   };
 
-  // Removed unused function - will be used in future updates for inline editing
-  // const handleUpdateAssociations = async (fileId: string, personaIds: string[], isGlobal: boolean) => {
-  //   if (!apiService) return;
-  //   try {
-  //     await apiService.updateFileAssociations(sessionId, fileId, {
-  //       personaIds: isGlobal ? undefined : personaIds,
-  //       isGlobal,
-  //     });
-  //     await loadFiles();
-  //     onFilesUpdated?.();
-  //   } catch (err) {
-  //     setError(err instanceof Error ? err.message : 'Failed to update file associations');
-  //   }
-  // };
+  // TODO: Add inline editing for file associations in future updates.
 
   const getStatusIndicator = (status: FileProcessingStatus) => {
     switch (status) {

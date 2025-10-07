@@ -141,7 +141,7 @@ Group Chat AI è una sofisticata piattaforma di intelligenza artificiale convers
 ### 5. Integrazione Servizi AI/ML
 
 #### **Amazon Bedrock**
-- **Modelli**: Claude 4 (us.anthropic.claude-sonnet-4-20250514-v1:0)
+- **Modelli**: Claude 4 (anthropic.claude-sonnet-4-5-20250929-v1:0)
 - **Utilizzo**:
   - Generazione di conversazioni per personalità AI
   - Analisi del contenuto e decisioni di routing

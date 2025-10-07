@@ -141,7 +141,7 @@ Group Chat AI är en sofistikerad realtids-AI-plattform för konversationer som 
 ### 5. AI/ML-tjänstintegration
 
 #### **Amazon Bedrock**
-- **Modeller**: Claude 4 (us.anthropic.claude-sonnet-4-20250514-v1:0)
+- **Modeller**: Claude 4 (anthropic.claude-sonnet-4-5-20250929-v1:0)
 - **Användning**:
   - Konversationsgenerering för AI-personas
   - Innehållsanalys och routingbeslut

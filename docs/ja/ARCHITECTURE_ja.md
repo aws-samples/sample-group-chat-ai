@@ -141,7 +141,7 @@ Group Chat AIは、ユーザーが複数のAIペルソナと協調的なディ�
 ### 5. AI/ML サービス統合
 
 #### **Amazon Bedrock**
-- **モデル**: Claude 4 (us.anthropic.claude-sonnet-4-20250514-v1:0)
+- **モデル**: Claude 4 (anthropic.claude-sonnet-4-5-20250929-v1:0)
 - **使用用途**:
   - AI ペルソナの会話生成
   - コンテンツ分析とルーティング決定

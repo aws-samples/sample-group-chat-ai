@@ -479,7 +479,7 @@ export class GroupChatAIStack extends cdk.Stack {
 
     new ssm.StringParameter(this, 'RoutingModelParameter', {
       parameterName: `/group-chat-ai/${environment}/routing-model`,
-      stringValue: modelConfig.routingModel || 'us.anthropic.claude-sonnet-4-20250514-v1:0',
+      stringValue: modelConfig.routingModel || 'us.anthropic.claude-sonnet-4-5-20250929-v1:0',
       description: `Routing Model configuration for Group Chat AI ${environment} environment`,
       tier: ssm.ParameterTier.STANDARD,
     });

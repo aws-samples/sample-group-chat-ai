@@ -11,7 +11,7 @@ class MarkdownTranslationService {
       region: process.env.AWS_REGION || 'us-east-1'
     });
     
-    this.modelId = 'us.anthropic.claude-sonnet-4-20250514-v1:0';
+    this.modelId = 'us.anthropic.claude-sonnet-4-5-20250929-v1:0';
     
     // Language configurations (sorted by language code)
     this.supportedLanguages = [

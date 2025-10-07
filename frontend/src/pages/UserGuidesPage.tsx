@@ -101,6 +101,25 @@ export const UserGuidesPage: React.FC = () => {
                 {/* nosemgrep: i18next-key-format */}
                 <li>{t('userGuides.content.selectingPersonas.items.2')}</li>
               </ul>
+
+              {/* nosemgrep: i18next-key-format */}
+              <h3>{t('userGuides.content.managingFiles.title')}</h3>
+              {/* nosemgrep: i18next-key-format */}
+              <p>{t('userGuides.content.managingFiles.description')}</p>
+              <ul>
+                {/* nosemgrep: i18next-key-format */}
+                <li>{t('userGuides.content.managingFiles.items.0')}</li>
+                {/* nosemgrep: i18next-key-format */}
+                <li>{t('userGuides.content.managingFiles.items.1')}</li>
+                {/* nosemgrep: i18next-key-format */}
+                <li>{t('userGuides.content.managingFiles.items.2')}</li>
+                {/* nosemgrep: i18next-key-format */}
+                <li>{t('userGuides.content.managingFiles.items.3')}</li>
+                {/* nosemgrep: i18next-key-format */}
+                <li>{t('userGuides.content.managingFiles.items.4')}</li>
+                {/* nosemgrep: i18next-key-format */}
+                <li>{t('userGuides.content.managingFiles.items.5')}</li>
+              </ul>
             </TextContent>
           </SpaceBetween>
         </ExpandableSection>

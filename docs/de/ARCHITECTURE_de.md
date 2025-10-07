@@ -141,7 +141,7 @@ Group Chat AI ist eine hochentwickelte Echtzeit-Konversations-KI-Plattform, die 
 ### 5. AI/ML-Services-Integration
 
 #### **Amazon Bedrock**
-- **Modelle**: Claude 4 (us.anthropic.claude-sonnet-4-20250514-v1:0)
+- **Modelle**: Claude 4 (anthropic.claude-sonnet-4-5-20250929-v1:0)
 - **Verwendung**:
   - Gesprächsgenerierung für KI-Personas
   - Inhaltsanalyse und Routing-Entscheidungen

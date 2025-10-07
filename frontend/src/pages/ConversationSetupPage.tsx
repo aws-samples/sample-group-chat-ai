@@ -270,25 +270,29 @@ export const ConversationSetupPage: React.FC = () => {
               onPersonasChange={handlePersonasChange}
             />
 
-            <SpaceBetween size='xs'>
-              <Header variant='h3'>Files</Header>
-              <Box>
-                <SpaceBetween direction='horizontal' size='s'>
-                  <Button
-                    variant='normal'
-                    iconName='upload'
-                    onClick={() => setIsFileManagementVisible(true)}
-                  >
-                    Manage Files
-                  </Button>
-                  {fileSetupData.length > 0 && (
-                    <Badge color='blue'>
-                      {fileSetupData.length} file{fileSetupData.length !== 1 ? 's' : ''} configured
-                    </Badge>
-                  )}
-                </SpaceBetween>
-              </Box>
-            </SpaceBetween>
+            <Box>
+              <SpaceBetween size='xs'>
+                <Header variant='h3' description='Upload files to provide contextual knowledge to AI personas'>
+                  Files
+                </Header>
+                <Box>
+                  <SpaceBetween direction='horizontal' size='s'>
+                    <Button
+                      variant='normal'
+                      iconName='upload'
+                      onClick={() => setIsFileManagementVisible(true)}
+                    >
+                      Manage Files
+                    </Button>
+                    {fileSetupData.length > 0 && (
+                      <Badge color='blue'>
+                        {fileSetupData.length} file{fileSetupData.length !== 1 ? 's' : ''} configured
+                      </Badge>
+                    )}
+                  </SpaceBetween>
+                </Box>
+              </SpaceBetween>
+            </Box>
 
             <ConversationLanguageSelector
               value={conversationLanguage}

@@ -12,6 +12,7 @@ import {
   Box,
   TextContent,
   Alert,
+  Badge,
 } from '@cloudscape-design/components';
 import {
   ConversationTopic,
@@ -25,6 +26,8 @@ import { ConversationTopicDisplay } from '../components/ConversationTopicDisplay
 import { ConversationTopicEditor } from '../components/ConversationTopicEditor';
 import { SessionScopedStorage } from '../utils/sessionScopedStorage';
 import { ConversationLanguageSelector } from '../components/ConversationLanguageSelector';
+import { FileManagementSetup, FileSetupData } from '../components/FileManagementSetup';
+import { FileSetupStorageManager } from '../utils/fileSetupStorage';
 
 export const ConversationSetupPage: React.FC = () => {
   const navigate = useNavigate();
@@ -45,6 +48,8 @@ export const ConversationSetupPage: React.FC = () => {
   const [conversationLanguage, setConversationLanguage] = useState<string>('en');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isFileManagementVisible, setIsFileManagementVisible] = useState(false);
+  const [fileSetupData, setFileSetupData] = useState<FileSetupData[]>([]);
 
   const handleScenarioSave = (newScenario: ConversationTopic) => {
     setConversationTopic(newScenario);
@@ -99,7 +104,24 @@ export const ConversationSetupPage: React.FC = () => {
     } catch {
       // Failed to load conversation topic from session storage
     }
+
+    // Load file setup data from localStorage
+    FileSetupStorageManager.loadFiles().then((files) => {
+      setFileSetupData(files);
+    });
   }, []);
+
+  // Save file setup data to localStorage whenever it changes
+  React.useEffect(() => {
+    if (fileSetupData.length > 0) {
+      FileSetupStorageManager.saveFiles(fileSetupData).catch((err) => {
+        console.error('Failed to persist file setup:', err);
+      });
+    } else if (fileSetupData.length === 0) {
+      // Clear storage when no files
+      FileSetupStorageManager.clearFiles();
+    }
+  }, [fileSetupData]);
 
   const handlePersonasChange = (personas: PersonaTileData[]) => {
     setCustomizedPersonas(personas);
@@ -151,6 +173,11 @@ export const ConversationSetupPage: React.FC = () => {
       // Migrate from old global storage to session-scoped storage
       SessionScopedStorage.migrateFromGlobalStorage(['editedDefaultPersonas', 'customPersonas']);
 
+      // Upload and process files if any are configured
+      if (fileSetupData.length > 0) {
+        await uploadFilesForSession(response.sessionId);
+      }
+
       // Navigate to session page with the session ID
       navigate(`/session/${response.sessionId}`);
     } catch (error) {
@@ -165,6 +192,46 @@ export const ConversationSetupPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const uploadFilesForSession = async (sessionId: string) => {
+    if (!apiService) return;
+
+    // Filter files to only upload those associated with selected personas
+    const filesToUpload = fileSetupData.filter((fileData) => {
+      // If global, always upload
+      if (fileData.isGlobal) return true;
+      // If specific personas, check if any are in selected list
+      return fileData.targetPersonas.some((pId) => selectedPersonaIds.includes(pId));
+    });
+
+    // Upload each file
+    for (const fileData of filesToUpload) {
+      try {
+        // Step 1: Initiate upload
+        const initiateResponse = await apiService.initiateFileUpload(sessionId, {
+          fileName: fileData.file.name,
+          fileType: fileData.file.type,
+          fileSize: fileData.file.size,
+          targetPersonas: fileData.isGlobal ? undefined : fileData.targetPersonas,
+        });
+
+        // Step 2: Upload to S3
+        await apiService.uploadFileToS3(initiateResponse.uploadUrl, fileData.file);
+
+        // Step 3: Complete upload (trigger processing)
+        await apiService.completeFileUpload(sessionId, initiateResponse.fileId, {
+          fileId: initiateResponse.fileId,
+        });
+      } catch (err) {
+        console.error(`Failed to upload file ${fileData.file.name}:`, err);
+        // Continue with other files even if one fails
+      }
+    }
+
+    // Clear file setup data after successful upload
+    FileSetupStorageManager.clearFiles();
+    setFileSetupData([]);
   };
 
   return (
@@ -203,6 +270,26 @@ export const ConversationSetupPage: React.FC = () => {
               onPersonasChange={handlePersonasChange}
             />
 
+            <SpaceBetween size='xs'>
+              <Header variant='h3'>Files</Header>
+              <Box>
+                <SpaceBetween direction='horizontal' size='s'>
+                  <Button
+                    variant='normal'
+                    iconName='upload'
+                    onClick={() => setIsFileManagementVisible(true)}
+                  >
+                    Manage Files
+                  </Button>
+                  {fileSetupData.length > 0 && (
+                    <Badge color='blue'>
+                      {fileSetupData.length} file{fileSetupData.length !== 1 ? 's' : ''} configured
+                    </Badge>
+                  )}
+                </SpaceBetween>
+              </Box>
+            </SpaceBetween>
+
             <ConversationLanguageSelector
               value={conversationLanguage}
               onChange={setConversationLanguage}
@@ -233,6 +320,15 @@ export const ConversationSetupPage: React.FC = () => {
           conversationTopic={conversationTopic}
           onDismiss={() => setIsEditorVisible(false)}
           onSave={handleScenarioSave}
+        />
+
+        <FileManagementSetup
+          visible={isFileManagementVisible}
+          onDismiss={() => setIsFileManagementVisible(false)}
+          availablePersonas={customizedPersonas}
+          selectedPersonaIds={selectedPersonaIds}
+          files={fileSetupData}
+          onFilesChange={setFileSetupData}
         />
       </SpaceBetween>
     </Container>

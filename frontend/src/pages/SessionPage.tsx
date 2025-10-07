@@ -42,7 +42,6 @@ import { VoiceEnabledTextArea } from '../components/VoiceEnabledTextArea';
 import { VoiceSettings as VoiceSettingsComponent } from '../components/VoiceSettings';
 import { audioService } from '../services/AudioService';
 import { SpeakingIndicator } from '../components/SpeakingIndicator';
-import { FileUploadManager } from '../components/FileUploadManager';
 import { useTranslation } from 'react-i18next';
 
 interface SessionPageState {
@@ -66,7 +65,6 @@ interface SessionPageState {
   voiceSettings: VoiceSettings | null;
   pendingPersonaResponses: ConversationMessage[];
   currentlySpeakingPersona: string | null;
-  fileUploadExpanded: boolean;
 }
 
 // Helper function to build persona info map from session data
@@ -155,7 +153,6 @@ export const SessionPage: React.FC = () => {
     voiceSettings: null,
     pendingPersonaResponses: [],
     currentlySpeakingPersona: null,
-    fileUploadExpanded: false,
   });
 
 
@@ -646,10 +643,6 @@ export const SessionPage: React.FC = () => {
     setState(prev => ({ ...prev, voiceSettingsExpanded: !prev.voiceSettingsExpanded }));
   };
 
-  const handleToggleFileUpload = () => {
-    setState(prev => ({ ...prev, fileUploadExpanded: !prev.fileUploadExpanded }));
-  };
-
   // Memoize voice config to prevent recreation on every render
   const voiceConfig = useMemo(
     () => ({
@@ -706,9 +699,6 @@ export const SessionPage: React.FC = () => {
           description={t('session.header.description', { count: state.session?.activePersonas.length || 0 })}
           actions={
             <SpaceBetween direction='horizontal' size='xs'>
-              <Button variant='normal' onClick={handleToggleFileUpload} iconName='upload'>
-                Manage Files
-              </Button>
               <Button variant='normal' onClick={handleToggleVoiceSettings}>
                 {/* nosemgrep: i18next-key-missing-namespace */}
                 {t('session.actions.voiceSettings')}
@@ -751,31 +741,6 @@ export const SessionPage: React.FC = () => {
             onSettingsChange={handleVoiceSettingsChange}
             isExpanded={state.voiceSettingsExpanded}
             onToggleExpanded={handleToggleVoiceSettings}
-          />
-        )}
-
-        {/* File Upload Manager */}
-        {sessionId && state.session && state.fileUploadExpanded && (
-          <FileUploadManager
-            sessionId={sessionId}
-            availablePersonas={state.session.activePersonas.map(personaId => {
-              const personaInfo = state.personaInfoMap[personaId];
-              const customPersona = state.session?.customPersonas?.[personaId];
-              return {
-                personaId,
-                name: getPersonaNameWithCustom(personaId, state.personaInfoMap),
-                role: getPersonaRoleWithCustom(personaId, state.personaInfoMap),
-                details: customPersona?.details || personaInfo?.description || '',
-                avatarId: getPersonaAvatarWithCustom(personaId, state.session),
-                voiceId: state.voiceSettings?.personaVoices?.[personaId],
-                isCustom: !!customPersona,
-                isSelected: true,
-              };
-            })}
-            onFilesUpdated={() => {
-              // Optionally reload session or show notification
-              console.log('Files updated for session', sessionId);
-            }}
           />
         )}
 

@@ -236,7 +236,7 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
             showFileSize
             showFileThumbnail
             tokenLimit={3}
-            constraintText="Supported: PDF, DOCX, CSV, XLSX, TXT, JSON. Max 25MB per file."
+            constraintText="Supported: PDF, Word (DOC/DOCX), Excel (CSV/XLSX), TXT, JSON. Max 25MB per file."
           />
 
           <Select

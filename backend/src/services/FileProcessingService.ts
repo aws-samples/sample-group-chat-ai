@@ -5,6 +5,9 @@ import { FileChunk } from '@group-chat-ai/shared';
 import { createLogger } from '../config/logger';
 import pdf from 'pdf-parse';
 import * as XLSX from 'xlsx';
+import JSZip from 'jszip';
+import { XMLParser } from 'fast-xml-parser';
+import WordExtractor from 'word-extractor';
 
 const logger = createLogger();
 
@@ -35,6 +38,11 @@ export class FileProcessingService {
       // Extract text based on file type
       if (mimeType === 'application/pdf') {
         extractedText = await this.extractPdfText(fileBuffer);
+      } else if (
+        mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+        mimeType === 'application/msword'
+      ) {
+        extractedText = await this.extractWordText(fileBuffer, mimeType);
       } else if (
         mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
         mimeType === 'application/vnd.ms-excel'
@@ -93,6 +101,71 @@ export class FileProcessingService {
         error: error instanceof Error ? error.message : String(error),
       });
       throw new Error('Failed to extract text from PDF file');
+    }
+  }
+
+  /**
+   * Extract text from Word document (.docx or .doc)
+   */
+  private async extractWordText(buffer: Buffer, mimeType: string): Promise<string> {
+    try {
+      // .docx files are ZIP archives containing XML
+      if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        // Convert Buffer to ArrayBuffer for JSZip
+        const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer;
+        const zip = await JSZip.loadAsync(arrayBuffer);
+        const documentXml = await zip.file('word/document.xml')?.async('text');
+
+        if (!documentXml) {
+          throw new Error('Invalid .docx file: missing document.xml');
+        }
+
+        // Parse XML and extract text content
+        const parser = new XMLParser({
+          ignoreAttributes: true,
+          ignoreDeclaration: true,
+        });
+
+        const doc = parser.parse(documentXml);
+
+        // Navigate the Word document structure to extract text
+        // Word documents store text in w:t elements within paragraphs
+        let text = '';
+        const extractTextRecursive = (obj: any): void => {
+          if (typeof obj === 'string') {
+            text += obj + ' ';
+          } else if (Array.isArray(obj)) {
+            obj.forEach(item => extractTextRecursive(item));
+          } else if (obj && typeof obj === 'object') {
+            // Check for text nodes
+            if (obj['w:t']) {
+              text += obj['w:t'] + ' ';
+            }
+            // Check for paragraph breaks
+            if (obj['w:p']) {
+              extractTextRecursive(obj['w:p']);
+              text += '\n';
+            }
+            // Recursively process all properties
+            Object.values(obj).forEach(value => extractTextRecursive(value));
+          }
+        };
+
+        extractTextRecursive(doc);
+        return text;
+      } else if (mimeType === 'application/msword') {
+        // .doc files (legacy binary format)
+        const extractor = new WordExtractor();
+        const extracted = await extractor.extract(buffer);
+        return extracted.getBody();
+      } else {
+        throw new Error(`Unsupported Word document type: ${mimeType}`);
+      }
+    } catch (error) {
+      logger.error('Error extracting Word document text', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new Error('Failed to extract text from Word document');
     }
   }
 
@@ -241,6 +314,8 @@ export class FileProcessingService {
   static getSupportedMimeTypes(): string[] {
     return [
       'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'application/vnd.ms-excel',
       'text/csv',
@@ -263,6 +338,8 @@ export class FileProcessingService {
   static getFileExtension(mimeType: string): string {
     const mimeToExt: Record<string, string> = {
       'application/pdf': '.pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+      'application/msword': '.doc',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
       'application/vnd.ms-excel': '.xls',
       'text/csv': '.csv',

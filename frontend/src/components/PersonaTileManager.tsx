@@ -521,6 +521,12 @@ export const PersonaTileManager: React.FC<PersonaTileManagerProps> = ({
             t('personaTileManager.labels.personas')}
         </Header>
 
+        <Alert type='info' dismissible={false}>
+          {
+            // nosemgrep: i18next-key-format
+            t('personaTileManager.helpText')}
+        </Alert>
+
         {error && (
           <Alert type='error' dismissible onDismiss={() => setError(null)}>
             {error}
@@ -701,6 +707,40 @@ export const PersonaTileManager: React.FC<PersonaTileManagerProps> = ({
               {
                 // nosemgrep: i18next-key-format
                 t('personaTileManager.restore.confirmMessage')}
+            </Box>
+
+            <Box>
+              <SpaceBetween size='s'>
+                {hasDeletedPersonas && (
+                  <Box>
+                    <strong>{
+                      // nosemgrep: i18next-key-format
+                      t('personaTileManager.restore.restoreOnlyDeleted')
+                    }:</strong>{' '}
+                    {
+                      // nosemgrep: i18next-key-format
+                      t('personaTileManager.restore.restoreOnlyDeletedHelp')}
+                  </Box>
+                )}
+                <Box>
+                  <strong>{
+                    // nosemgrep: i18next-key-format
+                    t('personaTileManager.restore.downloadAndRestore')
+                  }:</strong>{' '}
+                  {
+                    // nosemgrep: i18next-key-format
+                    t('personaTileManager.restore.downloadAndRestoreHelp')}
+                </Box>
+                <Box>
+                  <strong>{
+                    // nosemgrep: i18next-key-format
+                    t('personaTileManager.restore.confirm')
+                  }:</strong>{' '}
+                  {
+                    // nosemgrep: i18next-key-format
+                    t('personaTileManager.restore.confirmHelp')}
+                </Box>
+              </SpaceBetween>
             </Box>
 
             {hasDeletedPersonas && (

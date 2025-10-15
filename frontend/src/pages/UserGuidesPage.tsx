@@ -106,6 +106,88 @@ export const UserGuidesPage: React.FC = () => {
         </ExpandableSection>
 
         {/* nosemgrep: i18next-key-format */}
+        <ExpandableSection header={t('userGuides.sections.personaManagement')}>
+          <SpaceBetween size='m'>
+            <TextContent>
+              <p>
+                {/* nosemgrep: i18next-key-format */}
+                {t('userGuides.content.personaManagement.description')}
+              </p>
+
+              {/* nosemgrep: i18next-key-format */}
+              <h3>{t('userGuides.content.personaManagement.editing.title')}</h3>
+              <p>
+                {/* nosemgrep: i18next-key-format */}
+                {t('userGuides.content.personaManagement.editing.description')}
+              </p>
+              <ul>
+                {/* nosemgrep: i18next-key-format */}
+                <li>{t('userGuides.content.personaManagement.editing.items.0')}</li>
+                {/* nosemgrep: i18next-key-format */}
+                <li>{t('userGuides.content.personaManagement.editing.items.1')}</li>
+                {/* nosemgrep: i18next-key-format */}
+                <li>{t('userGuides.content.personaManagement.editing.items.2')}</li>
+                {/* nosemgrep: i18next-key-format */}
+                <li>{t('userGuides.content.personaManagement.editing.items.3')}</li>
+              </ul>
+
+              {/* nosemgrep: i18next-key-format */}
+              <h3>{t('userGuides.content.personaManagement.creating.title')}</h3>
+              <p>
+                {/* nosemgrep: i18next-key-format */}
+                {t('userGuides.content.personaManagement.creating.description')}
+              </p>
+              <ul>
+                {/* nosemgrep: i18next-key-format */}
+                <li>{t('userGuides.content.personaManagement.creating.items.0')}</li>
+                {/* nosemgrep: i18next-key-format */}
+                <li>{t('userGuides.content.personaManagement.creating.items.1')}</li>
+                {/* nosemgrep: i18next-key-format */}
+                <li>{t('userGuides.content.personaManagement.creating.items.2')}</li>
+                {/* nosemgrep: i18next-key-format */}
+                <li>{t('userGuides.content.personaManagement.creating.items.3')}</li>
+              </ul>
+
+              {/* nosemgrep: i18next-key-format */}
+              <h3>{t('userGuides.content.personaManagement.deleting.title')}</h3>
+              <p>
+                {/* nosemgrep: i18next-key-format */}
+                {t('userGuides.content.personaManagement.deleting.description')}
+              </p>
+              <ul>
+                {/* nosemgrep: i18next-key-format */}
+                <li>{t('userGuides.content.personaManagement.deleting.items.0')}</li>
+                {/* nosemgrep: i18next-key-format */}
+                <li>{t('userGuides.content.personaManagement.deleting.items.1')}</li>
+                {/* nosemgrep: i18next-key-format */}
+                <li>{t('userGuides.content.personaManagement.deleting.items.2')}</li>
+                {/* nosemgrep: i18next-key-format */}
+                <li>{t('userGuides.content.personaManagement.deleting.items.3')}</li>
+              </ul>
+
+              {/* nosemgrep: i18next-key-format */}
+              <h3>{t('userGuides.content.personaManagement.restoring.title')}</h3>
+              <p>
+                {/* nosemgrep: i18next-key-format */}
+                {t('userGuides.content.personaManagement.restoring.description')}
+              </p>
+              <ul>
+                {/* nosemgrep: i18next-key-format */}
+                <li>{t('userGuides.content.personaManagement.restoring.items.0')}</li>
+                {/* nosemgrep: i18next-key-format */}
+                <li>{t('userGuides.content.personaManagement.restoring.items.1')}</li>
+                {/* nosemgrep: i18next-key-format */}
+                <li>{t('userGuides.content.personaManagement.restoring.items.2')}</li>
+                {/* nosemgrep: i18next-key-format */}
+                <li>{t('userGuides.content.personaManagement.restoring.items.3')}</li>
+                {/* nosemgrep: i18next-key-format */}
+                <li>{t('userGuides.content.personaManagement.restoring.items.4')}</li>
+              </ul>
+            </TextContent>
+          </SpaceBetween>
+        </ExpandableSection>
+
+        {/* nosemgrep: i18next-key-format */}
         <ExpandableSection header={t('userGuides.sections.duringSession')}>
           <SpaceBetween size='m'>
             <ColumnLayout columns={2}>

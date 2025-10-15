@@ -1,7 +1,7 @@
 // Copyright 2025 Amazon.com, Inc. or its affiliates.
 // SPDX-License-Identifier: MIT-0
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   SpaceBetween,
@@ -14,8 +14,10 @@ import {
   Multiselect,
   FileUpload,
   Header,
+  Checkbox,
 } from '@cloudscape-design/components';
 import { PersonaTileData } from './PersonaTile';
+import { FileSetupStorageManager } from '../utils/fileSetupStorage';
 
 export interface FileSetupData {
   id: string;
@@ -45,6 +47,14 @@ export const FileManagementSetup: React.FC<FileManagementSetupProps> = ({
   const [isGlobal, setIsGlobal] = useState(true);
   const [selectedPersonas, setSelectedPersonas] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [rememberFiles, setRememberFiles] = useState<boolean>(
+    FileSetupStorageManager.getRememberFilesPreference()
+  );
+
+  // Save preference when it changes
+  useEffect(() => {
+    FileSetupStorageManager.setRememberFilesPreference(rememberFiles);
+  }, [rememberFiles]);
 
   // Filter personas to only show selected ones
   const filteredPersonas = availablePersonas.filter((p) =>
@@ -208,6 +218,28 @@ export const FileManagementSetup: React.FC<FileManagementSetupProps> = ({
           >
             Add to List
           </Button>
+        </SpaceBetween>
+
+        {/* Persistence Settings */}
+        <SpaceBetween size="m">
+          <Checkbox
+            checked={rememberFiles}
+            onChange={({ detail }) => setRememberFiles(detail.checked)}
+            description="File uploads and assignments will be saved locally and restored when you return"
+          >
+            Remember file uploads and assignments between sessions
+          </Checkbox>
+          {rememberFiles && files.length > 0 && (
+            <Button
+              onClick={() => {
+                FileSetupStorageManager.clearFiles();
+                onFilesChange([]);
+              }}
+              variant="normal"
+            >
+              Clear All Saved Files
+            </Button>
+          )}
         </SpaceBetween>
 
         {/* Files List */}

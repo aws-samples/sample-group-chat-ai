@@ -4,6 +4,7 @@
 import { FileSetupData } from '../components/FileManagementSetup';
 
 const FILE_SETUP_KEY = 'conversationFileSetup';
+const REMEMBER_FILES_PREFERENCE_KEY = 'conversationRememberFiles';
 
 interface SerializedFileData {
   id: string;
@@ -143,6 +144,31 @@ export class FileSetupStorageManager {
       return storage.lastUpdated;
     } catch {
       return null;
+    }
+  }
+
+  /**
+   * Get the "remember files" preference
+   * Returns true if user wants to persist files between sessions
+   * Defaults to true if not set
+   */
+  static getRememberFilesPreference(): boolean {
+    try {
+      const stored = localStorage.getItem(REMEMBER_FILES_PREFERENCE_KEY);
+      return stored !== null ? JSON.parse(stored) : true;
+    } catch {
+      return true;
+    }
+  }
+
+  /**
+   * Set the "remember files" preference
+   */
+  static setRememberFilesPreference(remember: boolean): void {
+    try {
+      localStorage.setItem(REMEMBER_FILES_PREFERENCE_KEY, JSON.stringify(remember));
+    } catch (error) {
+      console.error('Failed to save preference:', error);
     }
   }
 }

@@ -111,8 +111,16 @@ export const ConversationSetupPage: React.FC = () => {
     });
   }, []);
 
-  // Save file setup data to localStorage whenever it changes
+  // Save file setup data to localStorage whenever it changes (if preference is enabled)
   React.useEffect(() => {
+    const shouldRemember = FileSetupStorageManager.getRememberFilesPreference();
+
+    if (!shouldRemember) {
+      // If preference is disabled, clear any stored files
+      FileSetupStorageManager.clearFiles();
+      return;
+    }
+
     if (fileSetupData.length > 0) {
       FileSetupStorageManager.saveFiles(fileSetupData).catch((err) => {
         console.error('Failed to persist file setup:', err);
@@ -176,6 +184,12 @@ export const ConversationSetupPage: React.FC = () => {
       // Upload and process files if any are configured
       if (fileSetupData.length > 0) {
         await uploadFilesForSession(response.sessionId);
+
+        // Only clear files if user doesn't want to remember them
+        if (!FileSetupStorageManager.getRememberFilesPreference()) {
+          FileSetupStorageManager.clearFiles();
+          setFileSetupData([]);
+        }
       }
 
       // Navigate to session page with the session ID
@@ -228,10 +242,6 @@ export const ConversationSetupPage: React.FC = () => {
         // Continue with other files even if one fails
       }
     }
-
-    // Clear file setup data after successful upload
-    FileSetupStorageManager.clearFiles();
-    setFileSetupData([]);
   };
 
   return (

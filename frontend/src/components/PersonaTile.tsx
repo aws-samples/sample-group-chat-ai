@@ -104,13 +104,14 @@ export const PersonaTile: React.FC<PersonaTileProps> = ({
             iconName='edit'
             ariaLabel={`Edit ${persona.name}`}
           />
-          {persona.isCustom && onDelete && (
+          {onDelete && (
             <Button
               variant='link'
               onClick={e => {
                 e.stopPropagation();
                 onDelete(persona.personaId);
               }}
+              iconName='remove'
               ariaLabel={`Delete ${persona.name}`}
             />
           )}

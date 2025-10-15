@@ -16,6 +16,7 @@ import {
   StatusIndicator,
   Multiselect,
   FileUpload,
+  Checkbox,
 } from '@cloudscape-design/components';
 import { FileContext, FileProcessingStatus } from '@group-chat-ai/shared';
 import { useApi } from '../hooks/useApi';
@@ -35,6 +36,9 @@ interface FileUploadState {
   error?: string;
 }
 
+const STORAGE_KEY_PREFIX = 'groupchat-ai-files-';
+const STORAGE_PREFERENCE_KEY = 'groupchat-ai-remember-files';
+
 export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
   sessionId,
   availablePersonas,
@@ -48,21 +52,75 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
   const [selectedPersonas, setSelectedPersonas] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rememberFiles, setRememberFiles] = useState<boolean>(() => {
+    // Load preference from localStorage, default to true
+    const saved = localStorage.getItem(STORAGE_PREFERENCE_KEY);
+    return saved !== null ? JSON.parse(saved) : true;
+  });
 
   // Load existing files
   useEffect(() => {
     loadFiles();
   }, [sessionId]);
 
+  // Save preference when it changes
+  useEffect(() => {
+    localStorage.setItem(STORAGE_PREFERENCE_KEY, JSON.stringify(rememberFiles));
+  }, [rememberFiles]);
+
+  // Helper functions for localStorage
+  const saveFilesToLocalStorage = (sessionFiles: FileContext[]) => {
+    if (!rememberFiles) return;
+    try {
+      localStorage.setItem(
+        `${STORAGE_KEY_PREFIX}${sessionId}`,
+        JSON.stringify(sessionFiles)
+      );
+    } catch (err) {
+      console.error('Failed to save files to localStorage:', err);
+    }
+  };
+
+  const loadFilesFromLocalStorage = (): FileContext[] | null => {
+    if (!rememberFiles) return null;
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}${sessionId}`);
+      return saved ? JSON.parse(saved) : null;
+    } catch (err) {
+      console.error('Failed to load files from localStorage:', err);
+      return null;
+    }
+  };
+
+  const clearLocalStorage = () => {
+    try {
+      localStorage.removeItem(`${STORAGE_KEY_PREFIX}${sessionId}`);
+    } catch (err) {
+      console.error('Failed to clear localStorage:', err);
+    }
+  };
+
   const loadFiles = async () => {
     if (!apiService || !sessionId) return;
+
+    // First, try to load from localStorage for instant display
+    const cachedFiles = loadFilesFromLocalStorage();
+    if (cachedFiles && cachedFiles.length > 0) {
+      setFiles(cachedFiles);
+    }
 
     try {
       setLoading(true);
       const response = await apiService.listSessionFiles(sessionId);
       setFiles(response.files);
+      // Save to localStorage for future sessions
+      saveFilesToLocalStorage(response.files);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load files');
+      // If API fails but we have cached data, keep showing it
+      if (!cachedFiles) {
+        setFiles([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -166,6 +224,12 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete file');
     }
+  };
+
+  const handleClearCache = () => {
+    clearLocalStorage();
+    setFiles([]);
+    loadFiles();
   };
 
   // TODO: Add inline editing for file associations in future updates.
@@ -273,13 +337,28 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
             />
           )}
 
-          <Button
-            variant="primary"
-            onClick={handleUpload}
-            disabled={selectedFiles.length === 0 || (!isGlobal && selectedPersonas.length === 0)}
+          <Checkbox
+            checked={rememberFiles}
+            onChange={({ detail }) => setRememberFiles(detail.checked)}
+            description="File uploads and assignments will be cached locally for faster loading"
           >
-            Upload Files
-          </Button>
+            Remember file uploads and assignments between sessions
+          </Checkbox>
+
+          <SpaceBetween size="xs" direction="horizontal">
+            <Button
+              variant="primary"
+              onClick={handleUpload}
+              disabled={selectedFiles.length === 0 || (!isGlobal && selectedPersonas.length === 0)}
+            >
+              Upload Files
+            </Button>
+            {rememberFiles && files.length > 0 && (
+              <Button onClick={handleClearCache} variant="normal">
+                Clear Cached Files
+              </Button>
+            )}
+          </SpaceBetween>
         </SpaceBetween>
 
         {/* Upload Progress */}

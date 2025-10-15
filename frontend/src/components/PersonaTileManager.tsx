@@ -12,6 +12,7 @@ import {
   ButtonDropdown,
   Modal,
   Input,
+  ExpandableSection,
 } from '@cloudscape-design/components';
 import { PersonaTile, PersonaTileData } from './PersonaTile';
 import { PersonaEditor } from './PersonaEditor';
@@ -441,10 +442,17 @@ export const PersonaTileManager: React.FC<PersonaTileManagerProps> = ({
   const customPersonasCount = personas.filter(p => p.isCustom).length;
 
   // Calculate deleted and modified counts for restore modal
-  const deletedPersonasCount = loadDeletedDefaultPersonas().length;
-  const modifiedPersonasCount = personas.filter(p => !p.isCustom && isDefaultPersonaModified(p)).length;
+  const deletedPersonaIds = loadDeletedDefaultPersonas();
+  const deletedPersonasCount = deletedPersonaIds.length;
+  const modifiedPersonas = personas.filter(p => !p.isCustom && isDefaultPersonaModified(p));
+  const modifiedPersonasCount = modifiedPersonas.length;
   const hasDeletedPersonas = deletedPersonasCount > 0;
   const hasModifiedPersonas = modifiedPersonasCount > 0;
+
+  // Get deleted personas details
+  const deletedPersonasDetails = getDefaultPersonas().filter(p =>
+    deletedPersonaIds.includes(p.personaId)
+  );
 
   return (
     <Box>
@@ -653,7 +661,7 @@ export const PersonaTileManager: React.FC<PersonaTileManagerProps> = ({
         <Modal
           onDismiss={() => setShowRestoreWarning(false)}
           visible={showRestoreWarning}
-          size='medium'
+          size='large'
           footer={
             <Box float='right'>
               <SpaceBetween direction='horizontal' size='xs'>
@@ -694,20 +702,43 @@ export const PersonaTileManager: React.FC<PersonaTileManagerProps> = ({
                 // nosemgrep: i18next-key-format
                 t('personaTileManager.restore.confirmMessage')}
             </Box>
+
             {hasDeletedPersonas && (
-              <Box variant='p' color='text-status-info'>
-                {
+              <ExpandableSection
+                headerText={
                   // nosemgrep: i18next-key-format
-                  t('personaTileManager.restore.deletedInfo', { count: deletedPersonasCount })}
-              </Box>
+                  t('personaTileManager.restore.deletedInfo', { count: deletedPersonasCount })
+                }
+                variant='footer'
+              >
+                <Box variant='p'>
+                  {deletedPersonasDetails.map(persona => (
+                    <Box key={persona.personaId} margin={{ bottom: 'xxs' }}>
+                      <strong>{persona.name}</strong> - {persona.role}
+                    </Box>
+                  ))}
+                </Box>
+              </ExpandableSection>
             )}
+
             {hasModifiedPersonas && (
-              <Box variant='p' color='text-status-info'>
-                {
+              <ExpandableSection
+                headerText={
                   // nosemgrep: i18next-key-format
-                  t('personaTileManager.restore.modifiedInfo', { count: modifiedPersonasCount })}
-              </Box>
+                  t('personaTileManager.restore.modifiedInfo', { count: modifiedPersonasCount })
+                }
+                variant='footer'
+              >
+                <Box variant='p'>
+                  {modifiedPersonas.map(persona => (
+                    <Box key={persona.personaId} margin={{ bottom: 'xxs' }}>
+                      <strong>{persona.name}</strong> - {persona.role}
+                    </Box>
+                  ))}
+                </Box>
+              </ExpandableSection>
             )}
+
             <Box>
               {
                 // nosemgrep: i18next-key-format

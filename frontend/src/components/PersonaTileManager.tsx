@@ -41,7 +41,7 @@ export const PersonaTileManager: React.FC<PersonaTileManagerProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [deleteConfirmPersona, setDeleteConfirmPersona] = useState<PersonaTileData | null>(null);
-  const [deleteType, setDeleteType] = useState<'unmodified' | 'modified' | 'custom'>('custom');
+  const [deleteType, setDeleteType] = useState<'modified' | 'custom'>('custom');
   const [showRestoreWarning, setShowRestoreWarning] = useState(false);
 
   // Convert SharedPersonaDefinition to PersonaTileData

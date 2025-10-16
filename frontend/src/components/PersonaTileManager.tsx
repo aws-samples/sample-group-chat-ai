@@ -241,8 +241,7 @@ export const PersonaTileManager: React.FC<PersonaTileManagerProps> = ({
       saveEditedDefaultPersonas(editedDefaults);
 
       const deletedIds = loadDeletedDefaultPersonas();
-      deletedIds.push(deleteConfirmPersona.personaId);
-      saveDeletedDefaultPersonas(deletedIds);
+      saveDeletedDefaultPersonas([...new Set([...deletedIds, deleteConfirmPersona.personaId])]);
     }
 
     // Update selection if deleted persona was selected

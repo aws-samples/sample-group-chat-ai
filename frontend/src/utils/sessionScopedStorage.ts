@@ -31,10 +31,12 @@ export class SessionScopedStorage {
    * Get storage key - persona customizations persist across sessions, other data is session-scoped
    */
   private static getStorageKey(key: string): string {
-    // Persona customizations should persist across sessions in the same browser
+    // Persona customizations and selections should persist across sessions in the same browser
     if (
       key === PERSONA_STORAGE_KEYS.EDITED_DEFAULT_PERSONAS ||
-      key === PERSONA_STORAGE_KEYS.CUSTOM_PERSONAS
+      key === PERSONA_STORAGE_KEYS.CUSTOM_PERSONAS ||
+      key === PERSONA_STORAGE_KEYS.DELETED_DEFAULT_PERSONAS ||
+      key === PERSONA_STORAGE_KEYS.SELECTED_PERSONA_IDS
     ) {
       return `browser_${key}`; // Browser-wide persistence
     }
@@ -53,11 +55,13 @@ export class SessionScopedStorage {
     try {
       const storageKey = this.getStorageKey(key);
 
-      // Use localStorage for persona customizations (persist across sessions)
+      // Use localStorage for persona customizations and selections (persist across sessions)
       // Use sessionStorage for session-specific data
       const storage =
         key === PERSONA_STORAGE_KEYS.EDITED_DEFAULT_PERSONAS ||
-        key === PERSONA_STORAGE_KEYS.CUSTOM_PERSONAS
+        key === PERSONA_STORAGE_KEYS.CUSTOM_PERSONAS ||
+        key === PERSONA_STORAGE_KEYS.DELETED_DEFAULT_PERSONAS ||
+        key === PERSONA_STORAGE_KEYS.SELECTED_PERSONA_IDS
           ? localStorage
           : sessionStorage;
 
@@ -74,10 +78,12 @@ export class SessionScopedStorage {
     try {
       const storageKey = this.getStorageKey(key);
 
-      // Use localStorage for persona customizations, sessionStorage for others
+      // Use localStorage for persona customizations and selections, sessionStorage for others
       const storage =
         key === PERSONA_STORAGE_KEYS.EDITED_DEFAULT_PERSONAS ||
-        key === PERSONA_STORAGE_KEYS.CUSTOM_PERSONAS
+        key === PERSONA_STORAGE_KEYS.CUSTOM_PERSONAS ||
+        key === PERSONA_STORAGE_KEYS.DELETED_DEFAULT_PERSONAS ||
+        key === PERSONA_STORAGE_KEYS.SELECTED_PERSONA_IDS
           ? localStorage
           : sessionStorage;
 
@@ -96,10 +102,12 @@ export class SessionScopedStorage {
     try {
       const storageKey = this.getStorageKey(key);
 
-      // Use localStorage for persona customizations, sessionStorage for others
+      // Use localStorage for persona customizations and selections, sessionStorage for others
       const storage =
         key === PERSONA_STORAGE_KEYS.EDITED_DEFAULT_PERSONAS ||
-        key === PERSONA_STORAGE_KEYS.CUSTOM_PERSONAS
+        key === PERSONA_STORAGE_KEYS.CUSTOM_PERSONAS ||
+        key === PERSONA_STORAGE_KEYS.DELETED_DEFAULT_PERSONAS ||
+        key === PERSONA_STORAGE_KEYS.SELECTED_PERSONA_IDS
           ? localStorage
           : sessionStorage;
 
@@ -196,4 +204,6 @@ export class SessionScopedStorage {
 export const PERSONA_STORAGE_KEYS = {
   EDITED_DEFAULT_PERSONAS: 'editedDefaultPersonas',
   CUSTOM_PERSONAS: 'customPersonas',
+  DELETED_DEFAULT_PERSONAS: 'deletedDefaultPersonas',
+  SELECTED_PERSONA_IDS: 'selectedPersonaIds',
 } as const;

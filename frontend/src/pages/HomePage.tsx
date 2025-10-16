@@ -25,6 +25,7 @@ import { ConversationTopicDisplay } from '../components/ConversationTopicDisplay
 import { ConversationTopicEditor } from '../components/ConversationTopicEditor';
 import { SessionScopedStorage } from '../utils/sessionScopedStorage';
 import { ConversationLanguageSelector } from '../components/ConversationLanguageSelector';
+import { PERSONA_STORAGE_KEYS } from '../utils/sessionScopedStorage';
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -100,6 +101,22 @@ export const HomePage: React.FC = () => {
       // Failed to load conversation topic from session storage
     }
   }, []);
+
+  // Load selected persona IDs from storage on mount
+  React.useEffect(() => {
+    const savedSelectedIds = SessionScopedStorage.getItem<string[]>(
+      PERSONA_STORAGE_KEYS.SELECTED_PERSONA_IDS,
+      []
+    );
+    if (savedSelectedIds.length > 0) {
+      setSelectedPersonaIds(savedSelectedIds);
+    }
+  }, []);
+
+  // Save selected persona IDs whenever they change
+  React.useEffect(() => {
+    SessionScopedStorage.setItem(PERSONA_STORAGE_KEYS.SELECTED_PERSONA_IDS, selectedPersonaIds);
+  }, [selectedPersonaIds]);
 
   const handlePersonasChange = (personas: PersonaTileData[]) => {
     setCustomizedPersonas(personas);

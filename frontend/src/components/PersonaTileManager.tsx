@@ -12,6 +12,7 @@ import {
   ButtonDropdown,
   Modal,
   Input,
+  ExpandableSection,
 } from '@cloudscape-design/components';
 import { PersonaTile, PersonaTileData } from './PersonaTile';
 import { PersonaEditor } from './PersonaEditor';
@@ -40,6 +41,8 @@ export const PersonaTileManager: React.FC<PersonaTileManagerProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [deleteConfirmPersona, setDeleteConfirmPersona] = useState<PersonaTileData | null>(null);
+  const [deleteType, setDeleteType] = useState<'modified' | 'custom'>('custom');
+  const [showRestoreWarning, setShowRestoreWarning] = useState(false);
 
   // Convert SharedPersonaDefinition to PersonaTileData
   const convertSharedPersonaToTileData = (
@@ -82,17 +85,55 @@ export const PersonaTileManager: React.FC<PersonaTileManagerProps> = ({
     SessionScopedStorage.setItem(PERSONA_STORAGE_KEYS.CUSTOM_PERSONAS, customPersonas);
   };
 
+  // Load deleted default personas from session-scoped storage
+  const loadDeletedDefaultPersonas = (): string[] => {
+    return SessionScopedStorage.getItem(PERSONA_STORAGE_KEYS.DELETED_DEFAULT_PERSONAS, []);
+  };
+
+  // Save deleted default personas to session-scoped storage
+  const saveDeletedDefaultPersonas = (deletedIds: string[]) => {
+    SessionScopedStorage.setItem(PERSONA_STORAGE_KEYS.DELETED_DEFAULT_PERSONAS, deletedIds);
+  };
+
+  // Check if a default persona has been modified
+  const isDefaultPersonaModified = (persona: PersonaTileData): boolean => {
+    if (persona.isCustom) { return false; }
+
+    const defaultPersonas = getDefaultPersonas();
+    const originalPersona = defaultPersonas.find(p => p.personaId === persona.personaId);
+
+    if (!originalPersona) { return false; }
+
+    // Compare key fields to determine if modified
+    return (
+      persona.name !== originalPersona.name ||
+      persona.role !== originalPersona.role ||
+      persona.details !== originalPersona.details ||
+      persona.avatarId !== originalPersona.avatarId ||
+      persona.voiceId !== originalPersona.voiceId
+    );
+  };
+
+  // Download a single persona as JSON
+  const downloadPersona = (persona: PersonaTileData) => {
+    ImportExportService.exportPersonas([persona]);
+  };
+
   // Initialize personas on component mount (only once)
   useEffect(() => {
     const defaultPersonas = getDefaultPersonas();
     const editedDefaults = loadEditedDefaultPersonas();
     const customPersonas = loadCustomPersonas();
+    const deletedDefaultIds = loadDeletedDefaultPersonas();
 
     // Merge default personas with any edited versions from session storage
-    const initialDefaultPersonas = defaultPersonas.map((persona: PersonaTileData) => {
-      const editedVersion = editedDefaults[persona.personaId];
-      return editedVersion ? { ...editedVersion, isSelected: false } : persona;
-    });
+    // and filter out deleted default personas
+    const initialDefaultPersonas = defaultPersonas
+      .filter((persona: PersonaTileData) => !deletedDefaultIds.includes(persona.personaId))
+      .map((persona: PersonaTileData) => {
+        const editedVersion = editedDefaults[persona.personaId];
+        return editedVersion ? { ...editedVersion, isSelected: false } : persona;
+      });
 
     // Combine default personas with custom personas from session storage
     const allPersonas = [
@@ -144,28 +185,78 @@ export const PersonaTileManager: React.FC<PersonaTileManagerProps> = ({
 
   const handlePersonaDelete = (personaId: string) => {
     const persona = personas.find(p => p.personaId === personaId);
-    if (persona && persona.isCustom) {
+    if (!persona) { return; }
+
+    if (persona.isCustom) {
+      // Custom persona - show warning with download option
+      setDeleteType('custom');
       setDeleteConfirmPersona(persona);
+    } else {
+      // Default persona - check if modified
+      const isModified = isDefaultPersonaModified(persona);
+      if (isModified) {
+        // Modified default persona - show warning with download option
+        setDeleteType('modified');
+        setDeleteConfirmPersona(persona);
+      } else {
+        // Unmodified default persona - delete without warning
+        deleteDefaultPersona(persona);
+      }
     }
   };
 
-  const confirmDelete = () => {
-    if (deleteConfirmPersona) {
-      const updatedPersonas = personas.filter(p => p.personaId !== deleteConfirmPersona.personaId);
-      setPersonas(updatedPersonas);
+  // Delete an unmodified default persona (without confirmation)
+  const deleteDefaultPersona = (persona: PersonaTileData) => {
+    const updatedPersonas = personas.filter(p => p.personaId !== persona.personaId);
+    setPersonas(updatedPersonas);
 
+    // Add to deleted default personas list
+    const deletedIds = loadDeletedDefaultPersonas();
+    saveDeletedDefaultPersonas([...new Set([...deletedIds, persona.personaId])]);
+
+    // Update selection if deleted persona was selected
+    const newSelectedIds = updatedPersonas.filter(p => p.isSelected).map(p => p.personaId);
+    onSelectionChange(newSelectedIds);
+
+    setSuccess(
+      // nosemgrep: i18next-key-format
+      t('personaTileManager.messages.deleted'));
+  };
+
+  const confirmDelete = () => {
+    if (!deleteConfirmPersona) { return; }
+
+    const updatedPersonas = personas.filter(p => p.personaId !== deleteConfirmPersona.personaId);
+    setPersonas(updatedPersonas);
+
+    if (deleteType === 'custom') {
       // Save updated custom personas to session storage
       const customPersonas = updatedPersonas.filter(p => p.isCustom);
       saveCustomPersonas(customPersonas);
+    } else if (deleteType === 'modified') {
+      // Remove from edited defaults and add to deleted list
+      const editedDefaults = loadEditedDefaultPersonas();
+      delete editedDefaults[deleteConfirmPersona.personaId];
+      saveEditedDefaultPersonas(editedDefaults);
 
-      // Update selection if deleted persona was selected
-      const newSelectedIds = updatedPersonas.filter(p => p.isSelected).map(p => p.personaId);
+      const deletedIds = loadDeletedDefaultPersonas();
+      saveDeletedDefaultPersonas([...new Set([...deletedIds, deleteConfirmPersona.personaId])]);
+    }
 
-      onSelectionChange(newSelectedIds);
-      setDeleteConfirmPersona(null);
-      setSuccess(
-        // nosemgrep: i18next-key-format
-        t('personaTileManager.messages.deleted'));
+    // Update selection if deleted persona was selected
+    const newSelectedIds = updatedPersonas.filter(p => p.isSelected).map(p => p.personaId);
+    onSelectionChange(newSelectedIds);
+
+    setDeleteConfirmPersona(null);
+    setSuccess(
+      // nosemgrep: i18next-key-format
+      t('personaTileManager.messages.deleted'));
+  };
+
+  const handleDownloadAndDelete = () => {
+    if (deleteConfirmPersona) {
+      downloadPersona(deleteConfirmPersona);
+      confirmDelete();
     }
   };
 
@@ -207,9 +298,44 @@ export const PersonaTileManager: React.FC<PersonaTileManagerProps> = ({
     }
   };
 
-  const handleResetDefaultPersonas = () => {
+  const handleRestoreDefaultPersonas = () => {
+    // Show warning modal first
+    setShowRestoreWarning(true);
+  };
+
+  const restoreOnlyDeletedPersonas = () => {
+    // Only clear deleted default personas, keep customizations
+    SessionScopedStorage.removeItem(PERSONA_STORAGE_KEYS.DELETED_DEFAULT_PERSONAS);
+
+    // Get all default personas
+    const defaultPersonas = getDefaultPersonas();
+    const editedDefaults = loadEditedDefaultPersonas();
+
+    // Apply any existing customizations
+    const restoredDefaultPersonas = defaultPersonas.map((persona: PersonaTileData) => {
+      const editedVersion = editedDefaults[persona.personaId];
+      return editedVersion
+        ? { ...editedVersion, isSelected: selectedPersonaIds.includes(editedVersion.personaId) }
+        : { ...persona, isSelected: selectedPersonaIds.includes(persona.personaId) };
+    });
+
+    // Keep any custom personas
+    const customPersonas = personas.filter(p => p.isCustom);
+    const allPersonas = [...restoredDefaultPersonas, ...customPersonas];
+
+    setPersonas(allPersonas);
+    setShowRestoreWarning(false);
+    setSuccess(
+      // nosemgrep: i18next-key-format
+      t('personaTileManager.messages.restoredDeleted'));
+  };
+
+  const confirmRestoreDefaultPersonas = () => {
     // Clear edited default personas from session-scoped storage
     SessionScopedStorage.removeItem(PERSONA_STORAGE_KEYS.EDITED_DEFAULT_PERSONAS);
+
+    // Clear deleted default personas to restore all defaults
+    SessionScopedStorage.removeItem(PERSONA_STORAGE_KEYS.DELETED_DEFAULT_PERSONAS);
 
     // Reset to original default personas
     const defaultPersonas = getDefaultPersonas();
@@ -223,9 +349,23 @@ export const PersonaTileManager: React.FC<PersonaTileManagerProps> = ({
     const allPersonas = [...resetPersonas, ...customPersonas];
 
     setPersonas(allPersonas);
+    setShowRestoreWarning(false);
     setSuccess(
       // nosemgrep: i18next-key-format
-      t('personaTileManager.messages.reset'));
+      t('personaTileManager.messages.restored'));
+  };
+
+  const handleDownloadAllCustomAndRestore = () => {
+    // Download all custom and modified personas before restoring
+    const customPersonas = personas.filter(p => p.isCustom);
+    const modifiedDefaults = personas.filter(p => !p.isCustom && isDefaultPersonaModified(p));
+    const personasToDownload = [...customPersonas, ...modifiedDefaults];
+
+    if (personasToDownload.length > 0) {
+      ImportExportService.exportPersonas(personasToDownload);
+    }
+
+    confirmRestoreDefaultPersonas();
   };
 
   const handleCreateNew = () => {
@@ -299,6 +439,19 @@ export const PersonaTileManager: React.FC<PersonaTileManagerProps> = ({
   const selectedCount = personas.filter(p => p.isSelected).length;
   const customPersonasCount = personas.filter(p => p.isCustom).length;
 
+  // Calculate deleted and modified counts for restore modal
+  const deletedPersonaIds = loadDeletedDefaultPersonas();
+  const deletedPersonasCount = deletedPersonaIds.length;
+  const modifiedPersonas = personas.filter(p => !p.isCustom && isDefaultPersonaModified(p));
+  const modifiedPersonasCount = modifiedPersonas.length;
+  const hasDeletedPersonas = deletedPersonasCount > 0;
+  const hasModifiedPersonas = modifiedPersonasCount > 0;
+
+  // Get deleted personas details
+  const deletedPersonasDetails = getDefaultPersonas().filter(p =>
+    deletedPersonaIds.includes(p.personaId)
+  );
+
   return (
     <Box>
       <SpaceBetween size='l'>
@@ -335,8 +488,8 @@ export const PersonaTileManager: React.FC<PersonaTileManagerProps> = ({
                   {
                     text:
                       // nosemgrep: i18next-key-format
-                      t('personaTileManager.actions.resetDefault'),
-                    id: 'reset-defaults',
+                      t('personaTileManager.actions.restoreDefault'),
+                    id: 'restore-defaults',
                     iconName: 'refresh',
                   },
                 ]}
@@ -348,8 +501,8 @@ export const PersonaTileManager: React.FC<PersonaTileManagerProps> = ({
                     case 'export-personas':
                       handleExportPersonas();
                       break;
-                    case 'reset-defaults':
-                      handleResetDefaultPersonas();
+                    case 'restore-defaults':
+                      handleRestoreDefaultPersonas();
                       break;
                   }
                 }}
@@ -365,6 +518,12 @@ export const PersonaTileManager: React.FC<PersonaTileManagerProps> = ({
             // nosemgrep: i18next-key-format
             t('personaTileManager.labels.personas')}
         </Header>
+
+        <Alert type='info' dismissible={false}>
+          {
+            // nosemgrep: i18next-key-format
+            t('personaTileManager.helpText')}
+        </Alert>
 
         {error && (
           <Alert type='error' dismissible onDismiss={() => setError(null)}>
@@ -410,7 +569,7 @@ export const PersonaTileManager: React.FC<PersonaTileManagerProps> = ({
                 persona={item}
                 onSelect={handlePersonaSelect}
                 onEdit={handlePersonaEdit}
-                onDelete={item.isCustom ? handlePersonaDelete : undefined}
+                onDelete={handlePersonaDelete}
               />
             ),
           }}
@@ -450,6 +609,7 @@ export const PersonaTileManager: React.FC<PersonaTileManagerProps> = ({
           isCreating={isCreating}
         />
 
+        {/* Delete confirmation modal for custom and modified personas */}
         <Modal
           onDismiss={() => setDeleteConfirmPersona(null)}
           visible={deleteConfirmPersona !== null}
@@ -462,6 +622,13 @@ export const PersonaTileManager: React.FC<PersonaTileManagerProps> = ({
                     // nosemgrep: i18next-key-format
                     t('personaTileManager.delete.cancel')}
                 </Button>
+                {(deleteType === 'custom' || deleteType === 'modified') && (
+                  <Button variant='normal' onClick={handleDownloadAndDelete}>
+                    {
+                      // nosemgrep: i18next-key-format
+                      t('personaTileManager.delete.downloadAndDelete')}
+                  </Button>
+                )}
                 <Button variant='primary' onClick={confirmDelete}>
                   {
                     // nosemgrep: i18next-key-format
@@ -472,18 +639,149 @@ export const PersonaTileManager: React.FC<PersonaTileManagerProps> = ({
           }
           header={
             // nosemgrep: i18next-key-format
-            t('personaTileManager.delete.confirmTitle')}
+            deleteType === 'custom'
+              ? t('personaTileManager.delete.confirmTitleCustom')
+              : t('personaTileManager.delete.confirmTitleModified')}
         >
           <SpaceBetween size='m'>
             <Box>
               {
                 // nosemgrep: i18next-key-format
-                t('personaTileManager.delete.confirmMessage', { name: deleteConfirmPersona?.name })}
+                deleteType === 'custom'
+                  ? t('personaTileManager.delete.confirmMessageCustom', { name: deleteConfirmPersona?.name })
+                  : t('personaTileManager.delete.confirmMessageModified', { name: deleteConfirmPersona?.name })}
             </Box>
-            <Box>{
+            <Box>
+              {
+                // nosemgrep: i18next-key-format
+                deleteType === 'custom'
+                  ? t('personaTileManager.delete.customWarning')
+                  : t('personaTileManager.delete.modifiedWarning')}
+            </Box>
+          </SpaceBetween>
+        </Modal>
 
-              // nosemgrep: i18next-key-format
-              t('personaTileManager.delete.cannotUndo')}</Box>
+        {/* Restore default personas warning modal */}
+        <Modal
+          onDismiss={() => setShowRestoreWarning(false)}
+          visible={showRestoreWarning}
+          size='large'
+          footer={
+            <Box float='right'>
+              <SpaceBetween direction='horizontal' size='xs'>
+                <Button variant='link' onClick={() => setShowRestoreWarning(false)}>
+                  {
+                    // nosemgrep: i18next-key-format
+                    t('personaTileManager.restore.cancel')}
+                </Button>
+                {hasDeletedPersonas && (
+                  <Button variant='normal' onClick={restoreOnlyDeletedPersonas}>
+                    {
+                      // nosemgrep: i18next-key-format
+                      t('personaTileManager.restore.restoreOnlyDeleted')}
+                  </Button>
+                )}
+                {(hasModifiedPersonas || customPersonasCount > 0) && (
+                  <Button variant='normal' onClick={handleDownloadAllCustomAndRestore}>
+                    {
+                      // nosemgrep: i18next-key-format
+                      t('personaTileManager.restore.downloadAndRestore')}
+                  </Button>
+                )}
+                <Button variant='primary' onClick={confirmRestoreDefaultPersonas}>
+                  {
+                    // nosemgrep: i18next-key-format
+                    t('personaTileManager.restore.confirm')}
+                </Button>
+              </SpaceBetween>
+            </Box>
+          }
+          header={
+            // nosemgrep: i18next-key-format
+            t('personaTileManager.restore.confirmTitle')}
+        >
+          <SpaceBetween size='m'>
+            <Box>
+              {
+                // nosemgrep: i18next-key-format
+                t('personaTileManager.restore.confirmMessage')}
+            </Box>
+
+            <Box>
+              <SpaceBetween size='s'>
+                {hasDeletedPersonas && (
+                  <Box>
+                    <strong>{
+                      // nosemgrep: i18next-key-format
+                      t('personaTileManager.restore.restoreOnlyDeleted')
+                    }:</strong>{' '}
+                    {
+                      // nosemgrep: i18next-key-format
+                      t('personaTileManager.restore.restoreOnlyDeletedHelp')}
+                  </Box>
+                )}
+                <Box>
+                  <strong>{
+                    // nosemgrep: i18next-key-format
+                    t('personaTileManager.restore.downloadAndRestore')
+                  }:</strong>{' '}
+                  {
+                    // nosemgrep: i18next-key-format
+                    t('personaTileManager.restore.downloadAndRestoreHelp')}
+                </Box>
+                <Box>
+                  <strong>{
+                    // nosemgrep: i18next-key-format
+                    t('personaTileManager.restore.confirm')
+                  }:</strong>{' '}
+                  {
+                    // nosemgrep: i18next-key-format
+                    t('personaTileManager.restore.confirmHelp')}
+                </Box>
+              </SpaceBetween>
+            </Box>
+
+            {hasDeletedPersonas && (
+              <ExpandableSection
+                headerText={
+                  // nosemgrep: i18next-key-format
+                  t('personaTileManager.restore.deletedInfo', { count: deletedPersonasCount })
+                }
+                variant='footer'
+              >
+                <Box variant='p'>
+                  {deletedPersonasDetails.map(persona => (
+                    <Box key={persona.personaId} margin={{ bottom: 'xxs' }}>
+                      <strong>{persona.name}</strong> - {persona.role}
+                    </Box>
+                  ))}
+                </Box>
+              </ExpandableSection>
+            )}
+
+            {hasModifiedPersonas && (
+              <ExpandableSection
+                headerText={
+                  // nosemgrep: i18next-key-format
+                  t('personaTileManager.restore.modifiedInfo', { count: modifiedPersonasCount })
+                }
+                variant='footer'
+              >
+                <Box variant='p'>
+                  {modifiedPersonas.map(persona => (
+                    <Box key={persona.personaId} margin={{ bottom: 'xxs' }}>
+                      <strong>{persona.name}</strong> - {persona.role}
+                    </Box>
+                  ))}
+                </Box>
+              </ExpandableSection>
+            )}
+
+            <Box>
+              {
+                // nosemgrep: i18next-key-format
+                t('personaTileManager.restore.warning')}
+            </Box>
           </SpaceBetween>
         </Modal>
       </SpaceBetween>

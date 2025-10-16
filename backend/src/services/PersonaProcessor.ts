@@ -196,7 +196,8 @@ export class PersonaProcessor {
         otherActivePersonas,
         imageAttachment,
         routingMode,
-        session?.conversationLanguage || session?.voiceSettings?.conversationLanguage
+        session?.conversationLanguage || session?.voiceSettings?.conversationLanguage,
+        session
       );
     } else {
       // Use default LLM request manager with group chat scenario
@@ -208,7 +209,8 @@ export class PersonaProcessor {
         otherActivePersonas,
         imageAttachment,
         routingMode,
-        session?.conversationLanguage || session?.voiceSettings?.conversationLanguage
+        session?.conversationLanguage || session?.voiceSettings?.conversationLanguage,
+        session
       );
     }
   }

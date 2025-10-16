@@ -141,7 +141,7 @@ Group Chat AI 是一个复杂的实时对话 AI 平台，使用户能够与多�
 ### 5. AI/ML 服务集成
 
 #### **Amazon Bedrock**
-- **模型**：Claude 4 (us.anthropic.claude-sonnet-4-20250514-v1:0)
+- **模型**：Claude 4 (anthropic.claude-sonnet-4-5-20250929-v1:0)
 - **用途**：
   - AI 角色的对话生成
   - 内容分析和路由决策

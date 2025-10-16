@@ -163,7 +163,7 @@ export class ConfigLoader {
   public getModelConfig(environment: string): ModelConfig {
     const backendConfig = this.getBackendConfig(environment);
     return {
-      personaModel: backendConfig.models?.personaModel || 'us.anthropic.claude-sonnet-4-20250514-v1:0',
+      personaModel: backendConfig.models?.personaModel || 'us.anthropic.claude-sonnet-4-5-20250929-v1:0',
       routingModel: backendConfig.models?.routingModel || 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
       llmProvider: backendConfig.models?.llmProvider || 'bedrock',
       routingProvider: backendConfig.models?.routingProvider || 'bedrock',

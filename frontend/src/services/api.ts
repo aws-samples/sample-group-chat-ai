@@ -14,6 +14,13 @@ import {
   ResetSessionPersonasResponse,
   PollyVoice,
   VoiceSettings,
+  UploadFileRequest,
+  UploadFileResponse,
+  CompleteFileUploadRequest,
+  CompleteFileUploadResponse,
+  ListFilesResponse,
+  UpdateFileAssociationsRequest,
+  UpdateFileAssociationsResponse,
 } from '@group-chat-ai/shared';
 
 const API_BASE_URL = (import.meta as { env?: Record<string, string> }).env?.VITE_API_BASE_URL || 'http://localhost:3000/api';
@@ -140,6 +147,61 @@ class ApiService {
     return this.request(`/sessions/${sessionId}/voice-settings`, {
       method: 'PUT',
       body: JSON.stringify(settings),
+    });
+  }
+
+  // File upload management
+  async initiateFileUpload(sessionId: string, request: UploadFileRequest): Promise<UploadFileResponse> {
+    return this.request(`/sessions/${sessionId}/files/initiate`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async uploadFileToS3(uploadUrl: string, file: File): Promise<void> {
+    const response = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type,
+      },
+      body: file,
+    });
+
+    if (!response.ok) {
+      throw new ApiError('Failed to upload file to S3', response.status);
+    }
+  }
+
+  async completeFileUpload(
+    sessionId: string,
+    fileId: string,
+    request: CompleteFileUploadRequest
+  ): Promise<CompleteFileUploadResponse> {
+    return this.request(`/sessions/${sessionId}/files/${fileId}/complete`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async listSessionFiles(sessionId: string, personaId?: string): Promise<ListFilesResponse> {
+    const queryParams = personaId ? `?personaId=${personaId}` : '';
+    return this.request(`/sessions/${sessionId}/files${queryParams}`);
+  }
+
+  async deleteFile(sessionId: string, fileId: string): Promise<{ success: boolean; message: string }> {
+    return this.request(`/sessions/${sessionId}/files/${fileId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async updateFileAssociations(
+    sessionId: string,
+    fileId: string,
+    request: UpdateFileAssociationsRequest
+  ): Promise<UpdateFileAssociationsResponse> {
+    return this.request(`/sessions/${sessionId}/files/${fileId}/associations`, {
+      method: 'PATCH',
+      body: JSON.stringify(request),
     });
   }
 }

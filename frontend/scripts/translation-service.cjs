@@ -9,7 +9,7 @@ class TranslationService {
   constructor() {
     this.client = new BedrockRuntimeClient({
     });
-    this.modelId = 'us.anthropic.claude-sonnet-4-20250514-v1:0';
+    this.modelId = 'us.anthropic.claude-sonnet-4-5-20250929-v1:0';
     this.maxOutputTokens = 64000;
   }
 

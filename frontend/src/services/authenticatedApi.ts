@@ -12,7 +12,14 @@ import {
   GetPersonasResponse,
   SessionSummaryResponse,
   VoiceSettings,
-  PollyVoice
+  PollyVoice,
+  UploadFileRequest,
+  UploadFileResponse,
+  CompleteFileUploadRequest,
+  CompleteFileUploadResponse,
+  ListFilesResponse,
+  UpdateFileAssociationsRequest,
+  UpdateFileAssociationsResponse,
 } from '@group-chat-ai/shared';
 
 export class AuthenticatedApiService {
@@ -173,6 +180,62 @@ export class AuthenticatedApiService {
   async deleteUserSession(userId: string, sessionId: string): Promise<void> {
     return this.request(`/user-sessions/${userId}/${sessionId}`, {
       method: 'DELETE',
+    });
+  }
+
+  // File upload management
+  async initiateFileUpload(sessionId: string, request: UploadFileRequest): Promise<UploadFileResponse> {
+    return this.request(`/sessions/${sessionId}/files/initiate`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async uploadFileToS3(uploadUrl: string, file: File): Promise<void> {
+    // Don't include auth headers for S3 presigned URL
+    const response = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type,
+      },
+      body: file,
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to upload file to S3');
+    }
+  }
+
+  async completeFileUpload(
+    sessionId: string,
+    fileId: string,
+    request: CompleteFileUploadRequest
+  ): Promise<CompleteFileUploadResponse> {
+    return this.request(`/sessions/${sessionId}/files/${fileId}/complete`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async listSessionFiles(sessionId: string, personaId?: string): Promise<ListFilesResponse> {
+    const queryParams = personaId ? `?personaId=${personaId}` : '';
+    return this.request(`/sessions/${sessionId}/files${queryParams}`);
+  }
+
+  async deleteFile(sessionId: string, fileId: string): Promise<{ success: boolean; message: string }> {
+    return this.request(`/sessions/${sessionId}/files/${fileId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async updateFileAssociations(
+    sessionId: string,
+    fileId: string,
+    request: UpdateFileAssociationsRequest
+  ): Promise<UpdateFileAssociationsResponse> {
+    return this.request(`/sessions/${sessionId}/files/${fileId}/associations`, {
+      method: 'PATCH',
+      body: JSON.stringify(request),
     });
   }
 }

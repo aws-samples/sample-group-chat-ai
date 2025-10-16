@@ -20,8 +20,8 @@ export class ModelConfig {
 
   // SINGLE SOURCE OF TRUTH FOR MODEL DEFAULTS
   private static readonly DEFAULT_MODELS: ModelDefaults = {
-    personaModel: 'openai.gpt-oss-120b-1:0',  // Keep OpenAI for personas
-    routingModel: 'us.anthropic.claude-sonnet-4-20250514-v1:0',
+    personaModel: 'us.anthropic.claude-sonnet-4-5-20250929-v1:0',
+    routingModel: 'us.anthropic.claude-sonnet-4-5-20250929-v1:0',
     personaProvider: 'bedrock',
     routingProvider: 'bedrock',
   };

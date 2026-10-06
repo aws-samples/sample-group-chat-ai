@@ -87,6 +87,12 @@ export function createSessionRoutes(sessionService: SessionService) {
     try {
       const requestData: CreateSessionRequest = req.body;
 
+      // Derive userId from the verified identity, never from the client-supplied
+      // body. authMiddleware guarantees req.auth is present for this route.
+      if (req.auth) {
+        requestData.userId = req.auth.sub;
+      }
+
       logger.info('Creating new session', {
         personas: requestData.selectedPersonas,
       });

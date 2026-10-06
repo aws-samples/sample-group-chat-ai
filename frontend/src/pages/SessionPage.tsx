@@ -43,6 +43,7 @@ import { VoiceSettings as VoiceSettingsComponent } from '../components/VoiceSett
 import { audioService } from '../services/AudioService';
 import { SpeakingIndicator } from '../components/SpeakingIndicator';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from 'react-oidc-context';
 
 interface SessionPageState {
   session: Session | null;
@@ -130,6 +131,7 @@ export const SessionPage: React.FC = () => {
   const navigate = useNavigate();
   const { apiService } = useApi();
   const { t } = useTranslation('pages');
+  const auth = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [state, setState] = useState<SessionPageState>({
@@ -353,7 +355,7 @@ export const SessionPage: React.FC = () => {
               sendingMessage: false,
             }));
           },
-        });
+        }, auth.user?.access_token);
 
         // WebSocket connected successfully
       } catch {
@@ -370,7 +372,7 @@ export const SessionPage: React.FC = () => {
       clearTimeout(timer);
       webSocketService.disconnect();
     };
-  }, [loadVoiceSettings, sessionId, state.session]);
+  }, [loadVoiceSettings, sessionId, state.session, auth.user?.access_token]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {

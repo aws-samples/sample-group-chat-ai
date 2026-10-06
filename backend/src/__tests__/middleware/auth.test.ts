@@ -2,7 +2,12 @@
 // SPDX-License-Identifier: MIT-0
 
 import { Request, Response } from 'express';
-import { requireSelf, identityKeysFor, AuthenticatedIdentity } from '../../middleware/auth';
+import {
+  requireSelf,
+  identityKeysFor,
+  verifyAccessToken,
+  AuthenticatedIdentity,
+} from '../../middleware/auth';
 
 function mockRes() {
   const res: Partial<Response> & { statusCode?: number; body?: unknown } = {};
@@ -76,5 +81,45 @@ describe('requireSelf', () => {
 
     expect(next).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(401);
+  });
+});
+
+describe('verifyAccessToken', () => {
+  const savedEnv = { ...process.env };
+
+  afterEach(() => {
+    process.env = { ...savedEnv };
+  });
+
+  it('returns a synthetic dev identity when AUTH_DISABLED=true (local dev)', async () => {
+    process.env.AUTH_DISABLED = 'true';
+    delete process.env.NODE_ENV;
+
+    const identity = await verifyAccessToken('alice-dev');
+    expect(identity.sub).toBe('alice-dev');
+    expect(identity.username).toBe('alice-dev');
+  });
+
+  it('falls back to a fixed dev user when AUTH_DISABLED=true and no token given', async () => {
+    process.env.AUTH_DISABLED = 'true';
+    delete process.env.NODE_ENV;
+
+    const identity = await verifyAccessToken(null);
+    expect(identity.sub).toBe('local-dev-user');
+  });
+
+  it('refuses AUTH_DISABLED in production (fail-closed)', async () => {
+    process.env.AUTH_DISABLED = 'true';
+    process.env.NODE_ENV = 'production';
+
+    await expect(verifyAccessToken('anything')).rejects.toThrow(/not permitted when NODE_ENV=production/);
+  });
+
+  it('throws on a missing token when auth is enabled', async () => {
+    delete process.env.AUTH_DISABLED;
+    process.env.COGNITO_USER_POOL_ID = 'us-east-1_test';
+    process.env.COGNITO_CLIENT_ID = 'testclient';
+
+    await expect(verifyAccessToken(null)).rejects.toThrow(/Missing bearer token/);
   });
 });

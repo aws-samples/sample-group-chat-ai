@@ -73,6 +73,37 @@ function getVerifier() {
   return verifier;
 }
 
+/**
+ * Verify a raw Cognito access token string and return the identity it proves.
+ * Shared by the HTTP middleware and the WebSocket handshake so both surfaces
+ * use one verifier, one token-use policy, and one AUTH_DISABLED escape hatch.
+ *
+ * Returns a dev identity when AUTH_DISABLED (local only; throws in production).
+ * Throws on a missing/invalid/expired token so callers can fail closed.
+ */
+export async function verifyAccessToken(
+  token: string | null | undefined
+): Promise<AuthenticatedIdentity> {
+  if (isAuthDisabled()) {
+    const devUser = (typeof token === 'string' && token.trim()) || 'local-dev-user';
+    return { sub: devUser, username: devUser, email: undefined };
+  }
+
+  if (!token) {
+    throw new Error('Missing bearer token');
+  }
+
+  const payload = await getVerifier().verify(token);
+  return {
+    sub: payload.sub,
+    username: typeof payload.username === 'string' ? payload.username : undefined,
+    email:
+      typeof (payload as Record<string, unknown>).email === 'string'
+        ? ((payload as Record<string, unknown>).email as string)
+        : undefined,
+  };
+}
+
 function extractBearerToken(req: Request): string | null {
   const header = req.get('Authorization') || req.get('authorization');
   if (!header) {
@@ -111,14 +142,7 @@ export async function authMiddleware(
   }
 
   try {
-    const payload = await getVerifier().verify(token);
-    req.auth = {
-      sub: payload.sub,
-      username: typeof payload.username === 'string' ? payload.username : undefined,
-      email: typeof (payload as Record<string, unknown>).email === 'string'
-        ? ((payload as Record<string, unknown>).email as string)
-        : undefined,
-    };
+    req.auth = await verifyAccessToken(token);
     next();
   } catch (error) {
     logger.warn('Rejected request with invalid token', {

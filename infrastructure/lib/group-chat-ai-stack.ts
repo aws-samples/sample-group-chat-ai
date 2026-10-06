@@ -584,6 +584,11 @@ export class GroupChatAIStack extends cdk.Stack {
           USER_SESSIONS_TABLE: this.userSessionsTable.tableName,
           FILE_METADATA_TABLE: fileMetadataTable.tableName,
           FILE_STORAGE_BUCKET: fileStorageBucket.bucketName,
+          // Cognito configuration for backend JWT verification (authMiddleware).
+          // Access tokens are verified against this pool/client; userId is
+          // derived from the verified `sub` claim, not the request path/body.
+          COGNITO_USER_POOL_ID: this.userPool.userPoolId,
+          COGNITO_CLIENT_ID: this.userPoolClient.userPoolClientId,
           // Parameter Store parameter names for runtime lookup
           LLM_PROVIDER_PARAM: `/group-chat-ai/${environment}/llm-provider`,
           LLM_MODEL_PARAM: `/group-chat-ai/${environment}/persona-model`,

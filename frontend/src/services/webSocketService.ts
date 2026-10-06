@@ -30,6 +30,7 @@ export interface WebSocketCallbacks {
 export class WebSocketService {
   private ws: WebSocket | null = null;
   private sessionId: string | null = null;
+  private accessToken: string | null = null;
   private callbacks: WebSocketCallbacks = {};
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
@@ -38,13 +39,23 @@ export class WebSocketService {
   private isManualClose = false;
 
   /**
-   * Connect to WebSocket server for a specific session
+   * Connect to WebSocket server for a specific session.
+   *
+   * @param accessToken Cognito access token. The browser WebSocket API cannot
+   *   set an Authorization header, so the backend reads the token from the
+   *   handshake query string. Required in deployed environments (the backend
+   *   fails closed); may be omitted only against a local AUTH_DISABLED backend.
    */
-  connect(sessionId: string, callbacks: WebSocketCallbacks): Promise<void> {
+  connect(
+    sessionId: string,
+    callbacks: WebSocketCallbacks,
+    accessToken?: string | null
+  ): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
         this.sessionId = sessionId;
         this.callbacks = callbacks;
+        this.accessToken = accessToken ?? null;
         this.isManualClose = false;
 
         // Close existing connection if any
@@ -53,8 +64,8 @@ export class WebSocketService {
         }
 
         // Create WebSocket connection
-        const wsUrl = this.getWebSocketUrl(sessionId);
-        console.log('Attempting WebSocket connection to:', wsUrl);
+        const wsUrl = this.getWebSocketUrl(sessionId, this.accessToken);
+        console.log('Attempting WebSocket connection to session:', sessionId);
         this.ws = new WebSocket(wsUrl);
 
         // Set up event handlers
@@ -89,7 +100,7 @@ export class WebSocketService {
         this.ws.onerror = error => {
           console.error('🚨 WebSocket error:', error);
           console.log('WebSocket state when error occurred:', this.ws?.readyState);
-          console.log('WebSocket URL that failed:', wsUrl);
+          console.log('WebSocket connection failed for session:', sessionId);
 
           if (this.callbacks.onConnectionError) {
             this.callbacks.onConnectionError(error);
@@ -127,6 +138,7 @@ export class WebSocketService {
     }
 
     this.sessionId = null;
+    this.accessToken = null;
     this.callbacks = {};
   }
 
@@ -311,7 +323,7 @@ export class WebSocketService {
     this.reconnectTimer = setTimeout(() => {
       if (this.sessionId && !this.isManualClose) {
         this.reconnectAttempts++;
-        this.connect(this.sessionId, this.callbacks).catch(error => {
+        this.connect(this.sessionId, this.callbacks, this.accessToken).catch(error => {
           console.error('Reconnection failed:', error);
         });
       }
@@ -321,7 +333,7 @@ export class WebSocketService {
   /**
    * Get WebSocket URL for session
    */
-  private getWebSocketUrl(sessionId: string): string {
+  private getWebSocketUrl(sessionId: string, accessToken?: string | null): string {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     let host;
     const importMeta = import.meta as { env?: Record<string, string> };
@@ -343,9 +355,13 @@ export class WebSocketService {
       host = window.location.host;
     }
 
-    const url = `${protocol}//${host}/ws/sessions/${sessionId}`;
-    console.log('WebSocket URL generated:', url);
-    console.log('Production WebSocket routing: CloudFront → ALB → ECS WebSocket Server');
+    // The browser WebSocket API cannot set an Authorization header, so the
+    // Cognito access token is passed on the handshake query string, which the
+    // backend verifies in verifyClient. Over wss:// this is TLS-encrypted.
+    const tokenQuery = accessToken ? `?token=${encodeURIComponent(accessToken)}` : '';
+    const url = `${protocol}//${host}/ws/sessions/${sessionId}${tokenQuery}`;
+    // Do NOT log the full URL - it carries the access token.
+    console.log('WebSocket URL generated for session:', sessionId);
     return url;
   }
 }

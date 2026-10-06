@@ -12,6 +12,7 @@ import {
 import { createLogger } from '../config/logger';
 import { UserSessionStorage } from '../services/UserSessionStorage';
 import { SessionService } from '../services/SessionService';
+import { requireSelf } from '../middleware/auth';
 
 const logger = createLogger();
 
@@ -21,6 +22,12 @@ export function createUserSessionRoutes(
   sessionService: SessionService
 ) {
   const router = Router();
+
+  // Every route in this router is scoped to a specific :userId. requireSelf
+  // ensures the authenticated caller (req.auth, set by authMiddleware) can only
+  // act on their OWN userId, rejecting any attempt to pass another user's id in
+  // the path. This is the core access-control fix for the reported IDOR.
+  router.use('/:userId', requireSelf);
 
   /**
    * @swagger
@@ -78,6 +85,7 @@ export function createUserSessionRoutes(
    *       500:
    *         $ref: '#/components/responses/InternalError'
    */
+  // GET /user-sessions/:userId - Get all sessions for a user
   router.get('/:userId', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { userId } = req.params;

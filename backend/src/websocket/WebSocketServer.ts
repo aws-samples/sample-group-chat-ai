@@ -8,6 +8,7 @@ import { createLogger } from '../config/logger';
 import { WebSocketController } from './WebSocketController';
 import { SessionService } from '../services/SessionService';
 import { UserSessionStorage } from '../services/UserSessionStorage';
+import { verifyAccessToken, AuthenticatedIdentity } from '../middleware/auth';
 
 const logger = createLogger();
 
@@ -22,22 +23,9 @@ export class WebSocketServer {
     this.wss = new WebSocket.WebSocketServer({
       server,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      verifyClient: (info: any) => {
-        // Log all incoming WebSocket connection attempts
-        logger.info('WebSocket connection attempt', {
-          url: info.req.url,
-          origin: info.origin,
-          headers: info.req.headers,
-        });
-
-        // Basic verification - could be enhanced with authentication
+      verifyClient: (info: any, cb: (res: boolean, code?: number, message?: string) => void) => {
         const url = parseUrl(info.req.url || '', true);
         const sessionId = this.extractSessionIdFromUrl(url.pathname || '');
-
-        logger.info('WebSocket path parsing', {
-          pathname: url.pathname,
-          extractedSessionId: sessionId,
-        });
 
         if (!sessionId) {
           logger.warn('WebSocket connection rejected - no session ID', {
@@ -45,14 +33,37 @@ export class WebSocketServer {
             pathname: url.pathname,
             origin: info.origin,
           });
-          return false;
+          cb(false, 1008, 'Invalid session ID');
+          return;
         }
 
-        logger.info('WebSocket connection approved', {
-          sessionId,
-          url: info.req.url,
-        });
-        return true;
+        // Fail-closed authentication: the browser WebSocket API cannot set an
+        // Authorization header, so the access token is passed as the `token`
+        // query parameter (or `access_token`). verifyAccessToken enforces the
+        // same Cognito verification and AUTH_DISABLED policy as the HTTP API.
+        const token =
+          (typeof url.query.token === 'string' && url.query.token) ||
+          (typeof url.query.access_token === 'string' && url.query.access_token) ||
+          null;
+
+        verifyAccessToken(token)
+          .then(identity => {
+            // Stash the verified identity on the request for the connection
+            // handler (ws passes the same req object through to 'connection').
+            (info.req as { auth?: AuthenticatedIdentity }).auth = identity;
+            logger.info('WebSocket connection approved', {
+              sessionId,
+              authenticatedSub: identity.sub,
+            });
+            cb(true);
+          })
+          .catch(error => {
+            logger.warn('WebSocket connection rejected - invalid token', {
+              sessionId,
+              reason: error instanceof Error ? error.message : 'unknown',
+            });
+            cb(false, 1008, 'Unauthorized');
+          });
       },
     });
 
@@ -73,7 +84,16 @@ export class WebSocketServer {
           return;
         }
 
-        logger.info('New WebSocket connection', { sessionId });
+        // Backstop: verifyClient already authenticated this handshake and set
+        // request.auth. If it is somehow absent, fail closed.
+        const identity = (request as { auth?: AuthenticatedIdentity }).auth;
+        if (!identity) {
+          logger.warn('WebSocket connection rejected - unauthenticated', { sessionId });
+          ws.close(1008, 'Unauthorized');
+          return;
+        }
+
+        logger.info('New WebSocket connection', { sessionId, authenticatedSub: identity.sub });
 
         // Handle the connection through the controller
         await this.webSocketController.handleConnection(ws, sessionId);

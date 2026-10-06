@@ -5,6 +5,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
@@ -28,6 +29,12 @@ dotenv.config();
 const app = express();
 const logger = createLogger();
 const PORT = process.env.PORT || 3000;
+
+// Behind CloudFront -> ALB there are two trusted proxy hops in front of the
+// app. Set a bounded hop count (NOT `true`) so Express derives the real client
+// IP from X-Forwarded-For for the rate limiter, without letting a client spoof
+// X-Forwarded-For to escape it. Overridable for other deployment topologies.
+app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS) || 2);
 
 // Security middleware
 app.use(helmet());
@@ -115,6 +122,21 @@ app.get('/api/', (req, res) => {
 // All /api routes below require a verified Cognito access token. authMiddleware
 // is fail-closed: without a valid token (or an explicit local-dev AUTH_DISABLED
 // opt-out) requests are rejected before reaching any controller.
+//
+// Rate limiting runs AHEAD of auth so the token-verification work (and the
+// per-user session routes behind it) cannot be driven in an unbounded loop by a
+// single client (CWE-770). Window/ceiling are conservative defaults, overridable
+// via env for load testing. The limiter is keyed by client IP; behind the ALB +
+// CloudFront, Express `trust proxy` must be set for the real client IP (see note).
+const apiRateLimiter = rateLimit({
+  windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 min
+  limit: Number(process.env.RATE_LIMIT_MAX) || 300, // requests per window per IP
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { error: 'Too Many Requests', message: 'Rate limit exceeded. Try again later.' },
+});
+
+app.use('/api', apiRateLimiter);
 app.use('/api', authMiddleware);
 
 app.use('/api/sessions', createSessionRoutes(sessionService));

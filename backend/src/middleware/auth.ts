@@ -104,13 +104,21 @@ export async function verifyAccessToken(
   };
 }
 
-function extractBearerToken(req: Request): string | null {
+export function extractBearerToken(req: Request): string | null {
   const header = req.get('Authorization') || req.get('authorization');
   if (!header) {
     return null;
   }
-  const match = /^Bearer\s+(.+)$/i.exec(header.trim());
-  return match ? match[1].trim() : null;
+  // Avoid a backtracking-prone regex (ReDoS, CWE-1333) on this
+  // attacker-controlled, pre-auth header. Match the scheme with a bounded,
+  // anchored check and slice the remainder instead of a `\s+(.+)` capture.
+  const trimmed = header.trim();
+  const SCHEME = 'bearer ';
+  if (trimmed.length <= SCHEME.length || trimmed.slice(0, SCHEME.length).toLowerCase() !== SCHEME) {
+    return null;
+  }
+  const token = trimmed.slice(SCHEME.length).trim();
+  return token.length > 0 ? token : null;
 }
 
 /**

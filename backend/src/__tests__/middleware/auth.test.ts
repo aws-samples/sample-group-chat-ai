@@ -6,8 +6,16 @@ import {
   requireSelf,
   identityKeysFor,
   verifyAccessToken,
+  extractBearerToken,
   AuthenticatedIdentity,
 } from '../../middleware/auth';
+
+function mockReqWithAuthHeader(value: string | undefined) {
+  return {
+    get: (name: string) =>
+      name.toLowerCase() === 'authorization' ? value : undefined,
+  } as unknown as Request;
+}
 
 function mockRes() {
   const res: Partial<Response> & { statusCode?: number; body?: unknown } = {};
@@ -21,6 +29,43 @@ function mockRes() {
   });
   return res as Response & { statusCode?: number; body?: unknown };
 }
+
+describe('extractBearerToken', () => {
+  it('extracts the token from a well-formed Bearer header', () => {
+    expect(extractBearerToken(mockReqWithAuthHeader('Bearer abc.def.ghi'))).toBe('abc.def.ghi');
+  });
+
+  it('is case-insensitive on the scheme', () => {
+    expect(extractBearerToken(mockReqWithAuthHeader('bearer tok'))).toBe('tok');
+    expect(extractBearerToken(mockReqWithAuthHeader('BEARER tok'))).toBe('tok');
+  });
+
+  it('returns null for a missing header', () => {
+    expect(extractBearerToken(mockReqWithAuthHeader(undefined))).toBeNull();
+  });
+
+  it('returns null for a non-Bearer scheme', () => {
+    expect(extractBearerToken(mockReqWithAuthHeader('Basic abc'))).toBeNull();
+  });
+
+  it('returns null when the scheme is present but the token is empty', () => {
+    expect(extractBearerToken(mockReqWithAuthHeader('Bearer    '))).toBeNull();
+  });
+
+  // Regression for the CodeQL ReDoS finding (CWE-1333): the old
+  // /^Bearer\s+(.+)$/i backtracked polynomially on "bearer " + many spaces.
+  // The slice-based parser must handle a pathological header in ~constant time.
+  it('handles a pathological whitespace header without catastrophic backtracking', () => {
+    const evil = 'bearer ' + ' '.repeat(100000);
+    const start = Date.now();
+    const result = extractBearerToken(mockReqWithAuthHeader(evil));
+    const elapsedMs = Date.now() - start;
+
+    // An all-whitespace token trims to empty -> null; must return fast.
+    expect(result).toBeNull();
+    expect(elapsedMs).toBeLessThan(50);
+  });
+});
 
 describe('identityKeysFor', () => {
   it('includes sub and email, dropping undefined', () => {

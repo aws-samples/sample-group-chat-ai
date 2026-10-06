@@ -4,7 +4,7 @@
 import { FileChunk } from '@group-chat-ai/shared';
 import { createLogger } from '../config/logger';
 import pdf from 'pdf-parse';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import JSZip from 'jszip';
 import { XMLParser } from 'fast-xml-parser';
 import WordExtractor from 'word-extractor';
@@ -174,13 +174,19 @@ export class FileProcessingService {
    */
   private async extractExcelText(buffer: Buffer): Promise<string> {
     try {
-      const workbook = XLSX.read(buffer, { type: 'buffer' });
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(buffer as unknown as ArrayBuffer);
       let text = '';
 
-      workbook.SheetNames.forEach((sheetName: string, index: number) => {
-        const worksheet = workbook.Sheets[sheetName];
-        text += `\n\n--- Sheet: ${sheetName} ---\n\n`;
-        text += XLSX.utils.sheet_to_txt(worksheet);
+      workbook.eachSheet((worksheet) => {
+        text += `\n\n--- Sheet: ${worksheet.name} ---\n\n`;
+        worksheet.eachRow({ includeEmpty: false }, (row) => {
+          // row.values is 1-indexed (index 0 is always empty); drop it, then
+          // flatten each cell to plain text (tab-separated, matching the prior
+          // sheet_to_txt output shape).
+          const cells = (row.values as unknown[]).slice(1).map((v) => this.cellToText(v));
+          text += cells.join('\t') + '\n';
+        });
       });
 
       return text;
@@ -193,13 +199,45 @@ export class FileProcessingService {
   }
 
   /**
+   * Flatten an ExcelJS cell value to plain text. Cell values may be primitives,
+   * dates, or rich objects (formula results, hyperlinks, rich text), so this
+   * normalizes each to a readable string.
+   */
+  private cellToText(value: unknown): string {
+    if (value === null || value === undefined) {
+      return '';
+    }
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+    if (typeof value === 'object') {
+      const v = value as Record<string, unknown>;
+      // Formula cell: prefer the computed result.
+      if ('result' in v && v.result !== undefined) {
+        return this.cellToText(v.result);
+      }
+      // Hyperlink cell.
+      if ('text' in v && typeof v.text === 'string') {
+        return v.text;
+      }
+      // Rich text cell: concatenate the runs.
+      if ('richText' in v && Array.isArray(v.richText)) {
+        return (v.richText as Array<{ text?: string }>).map((r) => r.text ?? '').join('');
+      }
+      return '';
+    }
+    return String(value);
+  }
+
+  /**
    * Extract text from CSV file
    */
   private async extractCsvText(buffer: Buffer): Promise<string> {
     try {
-      const workbook = XLSX.read(buffer, { type: 'buffer' });
-      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      return XLSX.utils.sheet_to_txt(firstSheet);
+      // CSV is already plain text; decode it directly rather than routing it
+      // through a spreadsheet parser. The downstream consumer only needs the
+      // flattened text content.
+      return buffer.toString('utf-8');
     } catch (error) {
       logger.error('Error extracting CSV text', {
         error: error instanceof Error ? error.message : String(error),

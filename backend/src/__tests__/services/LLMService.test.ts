@@ -3,56 +3,48 @@
 
 /**
  * Smoke test for LLMService Bedrock ConverseCommand path.
- * Verifies that LLMService correctly constructs and sends a ConverseCommand
- * and parses the response text, WITHOUT making real AWS calls.
+ * Uses aws-sdk-client-mock to capture ACTUAL ConverseCommand instances
+ * and assert on the exact command payload, while remaining fully offline.
  */
 
+// Clear the global module-level mock from setup.ts so aws-sdk-client-mock can take over
+jest.unmock('@aws-sdk/client-bedrock-runtime');
+
+import { mockClient } from 'aws-sdk-client-mock';
+import {
+  BedrockRuntimeClient,
+  ConverseCommand,
+  ConverseCommandInput,
+} from '@aws-sdk/client-bedrock-runtime';
 import { Persona } from '@group-chat-ai/shared';
 
-// Mock responses for different test scenarios
+// Create the mock client
+const bedrockMock = mockClient(BedrockRuntimeClient);
+
+// Mock response matching Bedrock's ConverseCommand output shape
 const mockBedrockResponse = {
   output: {
     message: {
+      role: 'assistant' as const,
       content: [{ text: 'This is a mock response from Bedrock Claude.' }],
     },
   },
-  stopReason: 'end_turn',
-  usage: { inputTokens: 100, outputTokens: 50 },
+  stopReason: 'end_turn' as const,
+  usage: { inputTokens: 100, outputTokens: 50, totalTokens: 150 },
+  metrics: { latencyMs: 150 },
 };
-
-// Captured command inputs for verification
-const capturedInputs: unknown[] = [];
-
-// Create a mock send function that captures inputs
-const mockSend = jest.fn().mockImplementation((command: unknown) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const input = (command as any).input;
-  capturedInputs.push(input);
-  return Promise.resolve(mockBedrockResponse);
-});
-
-// Mock BedrockRuntimeClient
-jest.mock('@aws-sdk/client-bedrock-runtime', () => {
-  const actual = jest.requireActual('@aws-sdk/client-bedrock-runtime');
-  return {
-    ...actual,
-    BedrockRuntimeClient: jest.fn().mockImplementation(() => ({
-      send: mockSend,
-      config: { region: 'us-west-2' },
-    })),
-  };
-});
 
 // Mock ModelConfig to avoid Parameter Store calls
 jest.mock('../../config/ModelConfig', () => ({
   ModelConfig: {
     getInstance: () => ({
-      getFullConfig: () => Promise.resolve({
-        personaModel: 'anthropic.claude-3-sonnet-20240229-v1:0',
-        routingModel: 'anthropic.claude-3-haiku-20240307-v1:0',
-        personaProvider: 'bedrock',
-        routingProvider: 'bedrock',
-      }),
+      getFullConfig: () =>
+        Promise.resolve({
+          personaModel: 'anthropic.claude-3-sonnet-20240229-v1:0',
+          routingModel: 'anthropic.claude-3-haiku-20240307-v1:0',
+          personaProvider: 'bedrock',
+          routingProvider: 'bedrock',
+        }),
     }),
   },
 }));
@@ -75,10 +67,10 @@ jest.mock('../../config/logger', () => ({
   }),
 }));
 
-// Import after mocks
+// Import LLMService AFTER mocks are configured
 import { LLMService } from '../../services/LLMService';
 
-describe('LLMService Bedrock ConverseCommand smoke test', () => {
+describe('LLMService Bedrock ConverseCommand smoke test (aws-sdk-client-mock)', () => {
   let llmService: LLMService;
 
   const createTestPersona = (overrides: Partial<Persona> = {}): Persona => ({
@@ -99,15 +91,19 @@ describe('LLMService Bedrock ConverseCommand smoke test', () => {
   });
 
   beforeEach(async () => {
-    // Clear captured inputs and reset mocks
-    capturedInputs.length = 0;
-    mockSend.mockClear();
-    
+    // Reset and configure mock before each test
+    bedrockMock.reset();
+    bedrockMock.on(ConverseCommand).resolves(mockBedrockResponse);
+
     // Create fresh service instance
     llmService = new LLMService();
-    
+
     // Allow async initialization to complete
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  });
+
+  afterAll(() => {
+    bedrockMock.restore();
   });
 
   it('sends a ConverseCommand and returns parsed response text', async () => {
@@ -124,11 +120,12 @@ describe('LLMService Bedrock ConverseCommand smoke test', () => {
       'What are your thoughts on expanding to new markets?'
     );
 
-    // Verify response is parsed from mock
+    // Verify response is parsed correctly from mock
     expect(response).toBe('This is a mock response from Bedrock Claude.');
-    
-    // Verify send was called
-    expect(mockSend).toHaveBeenCalled();
+
+    // Verify ConverseCommand was called at least once
+    const calls = bedrockMock.commandCalls(ConverseCommand);
+    expect(calls.length).toBeGreaterThan(0);
   });
 
   it('constructs a ConverseCommand with correct message structure', async () => {
@@ -142,31 +139,41 @@ describe('LLMService Bedrock ConverseCommand smoke test', () => {
 
     await llmService.generatePersonaResponse(testPersona, [], testMessage);
 
-    // Verify input was captured
-    expect(capturedInputs.length).toBeGreaterThan(0);
-    
-    // Get the last captured input (the persona call, not routing)
-    const lastInput = capturedInputs[capturedInputs.length - 1] as {
-      modelId?: string;
-      messages?: Array<{
-        role: string;
-        content: Array<{ text: string }>;
-      }>;
-      inferenceConfig?: {
-        maxTokens?: number;
-        temperature?: number;
-      };
-    };
+    // Get the captured ConverseCommand calls
+    const calls = bedrockMock.commandCalls(ConverseCommand);
+    expect(calls.length).toBeGreaterThan(0);
 
-    // Verify structure
-    expect(lastInput).toBeDefined();
-    expect(lastInput.modelId).toBeDefined();
-    expect(lastInput.messages).toBeDefined();
-    expect(lastInput.messages?.length).toBeGreaterThan(0);
-    expect(lastInput.messages?.[0].role).toBe('user');
-    expect(lastInput.messages?.[0].content).toBeDefined();
-    expect(lastInput.messages?.[0].content[0].text).toContain(testMessage);
-    expect(lastInput.inferenceConfig).toBeDefined();
+    // Get the LAST call (persona response, not routing) and extract its input
+    const lastCall = calls[calls.length - 1];
+    const input = lastCall.args[0].input as ConverseCommandInput;
+
+    // Assert on the ACTUAL command input structure
+    expect(input).toBeDefined();
+    expect(input.modelId).toBeDefined();
+    expect(typeof input.modelId).toBe('string');
+    expect(input.modelId).toContain('anthropic.claude');
+
+    // Verify messages array structure
+    expect(input.messages).toBeDefined();
+    expect(Array.isArray(input.messages)).toBe(true);
+    expect(input.messages!.length).toBeGreaterThan(0);
+
+    // First message should be user role with content
+    const firstMessage = input.messages![0];
+    expect(firstMessage.role).toBe('user');
+    expect(firstMessage.content).toBeDefined();
+    expect(Array.isArray(firstMessage.content)).toBe(true);
+    expect(firstMessage.content!.length).toBeGreaterThan(0);
+
+    // Verify the message text contains the test message
+    const textContent = firstMessage.content!.find((c) => 'text' in c);
+    expect(textContent).toBeDefined();
+    expect((textContent as { text: string }).text).toContain(testMessage);
+
+    // Verify inferenceConfig is present
+    expect(input.inferenceConfig).toBeDefined();
+    expect(input.inferenceConfig?.maxTokens).toBeDefined();
+    expect(typeof input.inferenceConfig?.maxTokens).toBe('number');
   });
 
   it('includes persona name and role in the prompt', async () => {
@@ -177,30 +184,31 @@ describe('LLMService Bedrock ConverseCommand smoke test', () => {
       promptTemplate: 'You analyze financial data.',
     });
 
-    await llmService.generatePersonaResponse(
-      testPersona,
-      [],
-      'Review the budget proposal.'
-    );
+    await llmService.generatePersonaResponse(testPersona, [], 'Review the budget proposal.');
 
-    // Find the captured input containing our prompt
-    const capturedInput = capturedInputs.find((input) => {
-      const typedInput = input as { messages?: Array<{ content: Array<{ text: string }> }> };
-      return typedInput.messages?.[0]?.content?.[0]?.text?.includes('Finance Director');
-    }) as { messages: Array<{ content: Array<{ text: string }> }> } | undefined;
+    // Get captured calls
+    const calls = bedrockMock.commandCalls(ConverseCommand);
+    expect(calls.length).toBeGreaterThan(0);
 
-    expect(capturedInput).toBeDefined();
-    const promptText = capturedInput!.messages[0].content[0].text;
-    
-    expect(promptText).toContain('Finance Director');
-    expect(promptText).toContain('Chief Financial Officer');
+    // Find a call whose prompt contains the persona name
+    const callWithPersona = calls.find((call) => {
+      const input = call.args[0].input as ConverseCommandInput;
+      const textContent = input.messages?.[0]?.content?.find((c) => 'text' in c);
+      return textContent && (textContent as { text: string }).text.includes('Finance Director');
+    });
+
+    expect(callWithPersona).toBeDefined();
+
+    const input = callWithPersona!.args[0].input as ConverseCommandInput;
+    const textContent = input.messages![0].content!.find((c) => 'text' in c) as { text: string };
+
+    expect(textContent.text).toContain('Finance Director');
+    expect(textContent.text).toContain('Chief Financial Officer');
   });
 
   it('does not make real network calls (offline verification)', async () => {
     // Spy on fetch to ensure no real calls are made
-    const fetchSpy = jest.spyOn(global, 'fetch').mockRejectedValue(
-      new Error('Network should not be called')
-    );
+    const fetchSpy = jest.spyOn(global, 'fetch').mockRejectedValue(new Error('Network should not be called'));
 
     const testPersona = createTestPersona({
       personaId: 'offline-test',
@@ -209,15 +217,15 @@ describe('LLMService Bedrock ConverseCommand smoke test', () => {
     });
 
     // This should succeed via the mock without network calls
-    const response = await llmService.generatePersonaResponse(
-      testPersona,
-      [],
-      'Test offline capability'
-    );
+    const response = await llmService.generatePersonaResponse(testPersona, [], 'Test offline capability');
 
     expect(response).toBe('This is a mock response from Bedrock Claude.');
     expect(fetchSpy).not.toHaveBeenCalled();
-    
+
+    // Verify mock was used
+    const calls = bedrockMock.commandCalls(ConverseCommand);
+    expect(calls.length).toBeGreaterThan(0);
+
     fetchSpy.mockRestore();
   });
 
@@ -230,18 +238,65 @@ describe('LLMService Bedrock ConverseCommand smoke test', () => {
       promptTemplate: customPrompt,
     });
 
-    await llmService.generatePersonaResponse(
-      testPersona,
-      [],
-      'Explain serverless architecture.'
-    );
+    await llmService.generatePersonaResponse(testPersona, [], 'Explain serverless architecture.');
 
-    // Find captured input with our custom prompt
-    const hasCustomPrompt = capturedInputs.some((input) => {
-      const typedInput = input as { messages?: Array<{ content: Array<{ text: string }> }> };
-      return typedInput.messages?.[0]?.content?.[0]?.text?.includes(customPrompt);
+    // Get captured calls
+    const calls = bedrockMock.commandCalls(ConverseCommand);
+    expect(calls.length).toBeGreaterThan(0);
+
+    // Find a call whose prompt contains the custom template
+    const hasCustomPrompt = calls.some((call) => {
+      const input = call.args[0].input as ConverseCommandInput;
+      const textContent = input.messages?.[0]?.content?.find((c) => 'text' in c);
+      return textContent && (textContent as { text: string }).text.includes(customPrompt);
     });
 
     expect(hasCustomPrompt).toBe(true);
+  });
+
+  it('uses the configured model ID from ModelConfig', async () => {
+    const testPersona = createTestPersona({
+      personaId: 'model-test',
+      name: 'Model Tester',
+      role: 'Tester',
+    });
+
+    await llmService.generatePersonaResponse(testPersona, [], 'Test model configuration');
+
+    // Get captured calls
+    const calls = bedrockMock.commandCalls(ConverseCommand);
+    expect(calls.length).toBeGreaterThan(0);
+
+    // The last call should use the persona model from mock ModelConfig
+    const lastCall = calls[calls.length - 1];
+    const input = lastCall.args[0].input as ConverseCommandInput;
+
+    // Verify modelId matches our mocked ModelConfig
+    expect(input.modelId).toBe('anthropic.claude-3-sonnet-20240229-v1:0');
+  });
+
+  it('sends inference config with temperature and maxTokens', async () => {
+    const testPersona = createTestPersona({
+      personaId: 'inference-test',
+      name: 'Inference Tester',
+      role: 'Tester',
+    });
+
+    await llmService.generatePersonaResponse(testPersona, [], 'Check inference config');
+
+    // Get captured calls
+    const calls = bedrockMock.commandCalls(ConverseCommand);
+    expect(calls.length).toBeGreaterThan(0);
+
+    const lastCall = calls[calls.length - 1];
+    const input = lastCall.args[0].input as ConverseCommandInput;
+
+    // Verify inference config structure
+    expect(input.inferenceConfig).toBeDefined();
+    expect(input.inferenceConfig?.maxTokens).toBeGreaterThan(0);
+    expect(input.inferenceConfig?.temperature).toBeDefined();
+    expect(typeof input.inferenceConfig?.temperature).toBe('number');
+    expect(input.inferenceConfig?.temperature).toBeGreaterThanOrEqual(0);
+    expect(input.inferenceConfig?.temperature).toBeLessThanOrEqual(1);
   });
 });

@@ -30,7 +30,7 @@
     "semgrep:json": "cd .. && source .venv/bin/activate && semgrep --config=semgrep.yml --json frontend/src/"
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "3.876.0",
+    "@aws-sdk/client-bedrock-runtime": "3.1147.0",
     "@cloudscape-design/components": "^3.0.1081",
     "@cloudscape-design/design-tokens": "3.0.0",
     "@cloudscape-design/global-styles": "1.0.0",
@@ -46,7 +46,7 @@
     "react-dom": "18.2.0",
     "react-i18next": "15.7.3",
     "react-oidc-context": "3.1.0",
-    "react-router-dom": "6.8.0",
+    "react-router-dom": "6.30.6",
     "uuid": "14.0.0",
     "vite": "6"
   },

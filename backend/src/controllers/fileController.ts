@@ -19,6 +19,7 @@ import { FileStorageService } from '../services/FileStorageService';
 import { FileProcessingService } from '../services/FileProcessingService';
 import { ContextManagementService } from '../services/ContextManagementService';
 import { SessionService } from '../services/SessionService';
+import { asString } from '../utils/requestParams';
 
 const logger = createLogger();
 
@@ -36,7 +37,7 @@ export function createFileRoutes(sessionService: SessionService) {
     '/:sessionId/files/initiate',
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const { sessionId } = req.params;
+        const sessionId = asString(req.params.sessionId);
         const uploadRequest: UploadFileRequest = req.body;
 
         logger.info('Initiating file upload', {
@@ -123,7 +124,8 @@ export function createFileRoutes(sessionService: SessionService) {
     '/:sessionId/files/:fileId/complete',
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const { sessionId, fileId } = req.params;
+        const sessionId = asString(req.params.sessionId);
+        const fileId = asString(req.params.fileId);
 
         logger.info('Completing file upload', { sessionId, fileId });
 
@@ -251,8 +253,8 @@ export function createFileRoutes(sessionService: SessionService) {
     '/:sessionId/files',
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const { sessionId } = req.params;
-        const { personaId } = req.query;
+        const sessionId = asString(req.params.sessionId);
+        const personaId = req.query.personaId !== undefined ? asString(req.query.personaId) : undefined;
 
         logger.info('Listing session files', { sessionId, personaId });
 
@@ -300,7 +302,8 @@ export function createFileRoutes(sessionService: SessionService) {
     '/:sessionId/files/:fileId',
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const { sessionId, fileId } = req.params;
+        const sessionId = asString(req.params.sessionId);
+        const fileId = asString(req.params.fileId);
 
         logger.info('Deleting file', { sessionId, fileId });
 
@@ -366,7 +369,8 @@ export function createFileRoutes(sessionService: SessionService) {
     '/:sessionId/files/:fileId/associations',
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const { sessionId, fileId } = req.params;
+        const sessionId = asString(req.params.sessionId);
+        const fileId = asString(req.params.fileId);
         const updateRequest: UpdateFileAssociationsRequest = req.body;
 
         // Prevent prototype pollution via dangerous fileId values

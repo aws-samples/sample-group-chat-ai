@@ -10,6 +10,7 @@ import {
   SessionStatus,
 } from '@group-chat-ai/shared';
 import { createLogger } from '../config/logger';
+import { asString } from '../utils/requestParams';
 import { UserSessionStorage } from '../services/UserSessionStorage';
 import { SessionService } from '../services/SessionService';
 import { requireSelf } from '../middleware/auth';
@@ -88,7 +89,7 @@ export function createUserSessionRoutes(
   // GET /user-sessions/:userId - Get all sessions for a user
   router.get('/:userId', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { userId } = req.params;
+      const userId = asString(req.params.userId);
       const { limit, offset, status } = req.query;
 
       logger.info('Getting user sessions', {
@@ -207,7 +208,8 @@ export function createUserSessionRoutes(
    */
   router.get('/:userId/:sessionId', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { userId, sessionId } = req.params;
+      const userId = asString(req.params.userId);
+      const sessionId = asString(req.params.sessionId);
 
       logger.info('Getting user session', { userId, sessionId });
 
@@ -271,7 +273,8 @@ export function createUserSessionRoutes(
    */
   router.post('/:userId/:sessionId/resume', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { userId, sessionId } = req.params;
+      const userId = asString(req.params.userId);
+      const sessionId = asString(req.params.sessionId);
 
       logger.info('Resuming user session', { userId, sessionId });
 
@@ -340,8 +343,9 @@ export function createUserSessionRoutes(
   // PUT /user-sessions/:userId/:sessionId/title - Update session title
   router.put('/:userId/:sessionId/title', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { userId, sessionId } = req.params;
-      const { title } = req.body;
+      const userId = asString(req.params.userId);
+      const sessionId = asString(req.params.sessionId);
+      const title: unknown = req.body.title;
 
       logger.info('Updating session title', { userId, sessionId, title });
 
@@ -384,7 +388,8 @@ export function createUserSessionRoutes(
   // DELETE /user-sessions/:userId/:sessionId - Delete a session
   router.delete('/:userId/:sessionId', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { userId, sessionId } = req.params;
+      const userId = asString(req.params.userId);
+      const sessionId = asString(req.params.sessionId);
 
       logger.info('Deleting user session', { userId, sessionId });
 
@@ -417,7 +422,7 @@ export function createUserSessionRoutes(
   // GET /user-sessions/:userId/stats - Get user session statistics
   router.get('/:userId/stats', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { userId } = req.params;
+      const userId = asString(req.params.userId);
 
       logger.info('Getting user session stats', { userId });
 

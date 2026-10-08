@@ -22,6 +22,7 @@ import { createLogger } from '../config/logger';
 import { SessionService } from '../services/SessionService';
 import { ImageService } from '../services/ImageService';
 import { validateCreateSession, validateSendMessage } from '../utils/validation';
+import { asString } from '../utils/requestParams';
 import { VoiceController } from './voiceController';
 
 const logger = createLogger();
@@ -161,7 +162,7 @@ export function createSessionRoutes(sessionService: SessionService) {
    */
   router.post('/:sessionId/messages', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { sessionId } = req.params;
+      const sessionId = asString(req.params.sessionId);
       const requestData: SendMessageRequest = req.body;
 
       logger.info('Processing message', { sessionId, messageLength: requestData.content?.length });
@@ -235,7 +236,7 @@ export function createSessionRoutes(sessionService: SessionService) {
    */
   router.put('/:sessionId/personas', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { sessionId } = req.params;
+      const sessionId = asString(req.params.sessionId);
       const requestData: UpdateSessionPersonasRequest = req.body;
 
       logger.info('Updating session personas', { sessionId, personas: requestData.activePersonas });
@@ -300,7 +301,7 @@ export function createSessionRoutes(sessionService: SessionService) {
    */
   router.delete('/:sessionId/personas', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { sessionId } = req.params;
+      const sessionId = asString(req.params.sessionId);
 
       logger.info('Resetting session personas to defaults', { sessionId });
 
@@ -364,7 +365,7 @@ export function createSessionRoutes(sessionService: SessionService) {
    */
   router.get('/:sessionId/summary', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { sessionId } = req.params;
+      const sessionId = asString(req.params.sessionId);
 
       logger.info('Generating session summary', { sessionId });
 
@@ -410,7 +411,7 @@ export function createSessionRoutes(sessionService: SessionService) {
    */
   router.delete('/:sessionId', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { sessionId } = req.params;
+      const sessionId = asString(req.params.sessionId);
 
       logger.info('Ending session', { sessionId });
 
@@ -430,7 +431,7 @@ export function createSessionRoutes(sessionService: SessionService) {
     upload.single('document'),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const { sessionId } = req.params;
+        const sessionId = asString(req.params.sessionId);
         const file = req.file;
 
         if (!file) {
@@ -467,7 +468,7 @@ export function createSessionRoutes(sessionService: SessionService) {
   // GET /sessions/:sessionId/documents - Get session documents
   router.get('/:sessionId/documents', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { sessionId } = req.params;
+      const sessionId = asString(req.params.sessionId);
 
       logger.info('Fetching session documents', { sessionId });
 
@@ -489,7 +490,8 @@ export function createSessionRoutes(sessionService: SessionService) {
     '/:sessionId/documents/:documentId',
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const { sessionId, documentId } = req.params;
+        const sessionId = asString(req.params.sessionId);
+        const documentId = asString(req.params.documentId);
 
         logger.info('Removing document from session', { sessionId, documentId });
 
@@ -509,7 +511,7 @@ export function createSessionRoutes(sessionService: SessionService) {
     '/:sessionId/images/initiate',
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const { sessionId } = req.params;
+        const sessionId = asString(req.params.sessionId);
         const requestData: InitiateImageUploadRequest = req.body;
 
         logger.info('Initiating image upload', {
@@ -550,7 +552,8 @@ export function createSessionRoutes(sessionService: SessionService) {
     '/:sessionId/images/:imageId/chunks',
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const { sessionId, imageId } = req.params;
+        const sessionId = asString(req.params.sessionId);
+        const imageId = asString(req.params.imageId);
         const requestData: UploadImageChunkRequest = req.body;
 
         logger.info('Uploading image chunk', {
@@ -592,7 +595,8 @@ export function createSessionRoutes(sessionService: SessionService) {
     '/:sessionId/images/:imageId/complete',
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const { sessionId, imageId } = req.params;
+        const sessionId = asString(req.params.sessionId);
+        const imageId = asString(req.params.imageId);
         const requestData: CompleteImageUploadRequest = { imageId };
 
         logger.info('Completing image upload', { sessionId, imageId });
@@ -629,7 +633,8 @@ export function createSessionRoutes(sessionService: SessionService) {
     '/:sessionId/images/:imageId',
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const { sessionId, imageId } = req.params;
+        const sessionId = asString(req.params.sessionId);
+        const imageId = asString(req.params.imageId);
 
         logger.info('Fetching image attachment', { sessionId, imageId });
 
@@ -674,7 +679,7 @@ export function createSessionRoutes(sessionService: SessionService) {
 
   router.get('/:sessionId', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { sessionId } = req.params;
+      const sessionId = asString(req.params.sessionId);
 
       logger.info('Fetching session details', { sessionId });
 

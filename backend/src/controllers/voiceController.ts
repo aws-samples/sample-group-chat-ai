@@ -7,6 +7,7 @@ import { SessionService } from '../services/SessionService';
 import { SharedServices } from '../services/SharedServices';
 import { createLogger } from '../config/logger';
 import { VoiceSettings, ValidationException } from '@group-chat-ai/shared';
+import { asString } from '../utils/requestParams';
 
 const logger = createLogger();
 
@@ -127,7 +128,7 @@ export class VoiceController {
    */
   async getVoiceSettings(req: Request, res: Response): Promise<void> {
     try {
-      const { sessionId } = req.params;
+      const sessionId = asString(req.params.sessionId);
 
       logger.info('Getting voice settings for session', { sessionId });
 
@@ -176,7 +177,7 @@ export class VoiceController {
    */
   async updateVoiceSettings(req: Request, res: Response): Promise<void> {
     try {
-      const { sessionId } = req.params;
+      const sessionId = asString(req.params.sessionId);
       const voiceSettings: VoiceSettings = req.body;
 
       logger.info('Updating voice settings for session', {

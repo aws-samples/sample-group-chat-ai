@@ -5,6 +5,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { GetPersonasResponse } from '@group-chat-ai/shared';
 import { PERSONA_DEFINITIONS, getPersonaById } from '@group-chat-ai/shared/personas';
 import { createLogger } from '../config/logger';
+import { asString } from '../utils/requestParams';
 
 const router = Router();
 const logger = createLogger();
@@ -74,7 +75,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
  */
 router.get('/:personaId', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { personaId } = req.params;
+    const personaId = asString(req.params.personaId);
 
     logger.info('Fetching persona details', { personaId });
 

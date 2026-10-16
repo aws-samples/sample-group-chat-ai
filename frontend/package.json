@@ -53,7 +53,7 @@
   "devDependencies": {
     "@eslint/js": "^9.34.0",
     "@testing-library/jest-dom": "5.16.0",
-    "@testing-library/react": "14.0.0",
+    "@testing-library/react": "16.3.3",
     "@testing-library/user-event": "14.4.0",
     "@types/glob": "^8.1.0",
     "@types/react": "18.3.23",

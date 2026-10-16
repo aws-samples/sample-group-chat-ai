@@ -64,7 +64,7 @@
     "@types/jest": "^30.0.0",
     "@types/jszip": "^3.4.0",
     "@types/pdf-parse": "1.1.4",
-    "@types/supertest": "2.0.0",
+    "@types/supertest": "7.2.1",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/uuid": "9.0.0",
     "@types/word-extractor": "^1.0.6",

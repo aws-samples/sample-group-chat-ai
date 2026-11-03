@@ -21,6 +21,20 @@ import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-r
 import axios from 'axios';
 import { ContextManagementService } from './ContextManagementService';
 
+// Fallback model for the direct Anthropic provider when none is configured.
+const DEFAULT_ANTHROPIC_MODEL = 'claude-sonnet-4-5';
+
+/**
+ * Join the text blocks of an Anthropic Messages API response. Thinking,
+ * redacted-thinking and tool blocks are skipped so they never reach users.
+ */
+export function extractAnthropicText(message: Anthropic.Message): string {
+  return message.content
+    .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+    .map((block) => block.text)
+    .join('');
+}
+
 const logger = createLogger();
 
 export class LLMService {
@@ -693,15 +707,14 @@ Please analyze this image in the context of your role and provide relevant feedb
     }
 
     try {
-      const completion = await this.anthropicClient.completions.create({
-        model: this.config.model || 'claude-2',
-        prompt: `\n\nHuman: ${prompt}\n\nAssistant:`,
-        max_tokens_to_sample: this.config.maxTokens,
+      const message = await this.anthropicClient.messages.create({
+        model: this.config.model || DEFAULT_ANTHROPIC_MODEL,
+        max_tokens: this.config.maxTokens,
         temperature: this.config.temperature,
-        stop_sequences: ['\n\nHuman:'],
+        messages: [{ role: 'user', content: prompt }],
       });
 
-      const response = completion.completion;
+      const response = extractAnthropicText(message);
       if (!response) {
         throw new Error('No response received from Anthropic');
       }
@@ -1093,17 +1106,16 @@ Please analyze this image in the context of your role and provide relevant feedb
 
       try {
         // Make sure we have a valid model for Anthropic
-        const anthropicModel = this.config.routingModel || 'claude-2';
+        const anthropicModel = this.config.routingModel || DEFAULT_ANTHROPIC_MODEL;
 
-        const completion = await this.anthropicClient.completions.create({
-          model: anthropicModel as string, // Type assertion for model string
-          prompt: `\n\nHuman: ${prompt}\n\nAssistant:`,
-          max_tokens_to_sample: maxTokens,
+        const message = await this.anthropicClient.messages.create({
+          model: anthropicModel,
+          max_tokens: maxTokens,
           temperature: temperature,
-          stop_sequences: ['\n\nHuman:'],
+          messages: [{ role: 'user', content: prompt }],
         });
 
-        const response = completion.completion;
+        const response = extractAnthropicText(message);
         if (!response) {
           throw new Error('No response received from Anthropic routing');
         }

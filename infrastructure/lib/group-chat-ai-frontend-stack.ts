@@ -9,7 +9,7 @@ import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as cr from 'aws-cdk-lib/custom-resources';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
-import { NagSuppressions } from 'cdk-nag';
+import { addNagSuppressions } from './nag-suppressions';
 import { Construct } from 'constructs';
 import path from 'path';
 import fs from 'fs';
@@ -60,7 +60,7 @@ export class GroupChatAIFrontendStack extends cdk.Stack {
     });
 
     // Suppress CDK Nag for S3 access logs - frontend asset bucket doesn't need server access logs
-    NagSuppressions.addResourceSuppressions(this.bucket, [
+    addNagSuppressions(this.bucket, [
       {
         id: 'AwsSolutions-S1',
         reason: 'Frontend S3 bucket does not require server access logging - CloudFront provides access logs and this bucket only serves static assets'
@@ -177,7 +177,7 @@ export class GroupChatAIFrontendStack extends cdk.Stack {
     });
 
     // Suppress CDK Nag findings for CloudFront configuration
-    NagSuppressions.addResourceSuppressions(this.distribution, [
+    addNagSuppressions(this.distribution, [
       {
         id: 'AwsSolutions-CFR1',
         reason: 'Geo restriction is enabled for US and Canada. WAF can be added in future iterations if additional security is required'
@@ -330,7 +330,7 @@ export class GroupChatAIFrontendStack extends cdk.Stack {
     });
 
     // Suppress CDK Nag findings for S3 deployment Lambda
-    NagSuppressions.addResourceSuppressions(this.deployment.handlerRole, [
+    addNagSuppressions(this.deployment.handlerRole, [
       {
         id: 'AwsSolutions-IAM4',
         reason: 'S3 deployment uses AWSLambdaBasicExecutionRole which is the standard AWS managed policy for Lambda execution',
@@ -344,7 +344,7 @@ export class GroupChatAIFrontendStack extends cdk.Stack {
         id: 'AwsSolutions-L1',
         reason: 'S3 deployment Lambda runtime is managed by CDK and uses the latest available version'
       }
-    ], true);
+    ]);
 
     // Create custom resource to generate and deploy config.json
     const configJsonLambda = new lambda.Function(this, 'ConfigJsonFunction', {
@@ -483,7 +483,7 @@ export class GroupChatAIFrontendStack extends cdk.Stack {
     }));
 
     // Suppress CDK Nag findings for legitimate wildcard usage in configJsonLambda
-    NagSuppressions.addResourceSuppressions(configJsonLambda, [
+    addNagSuppressions(configJsonLambda, [
       {
         id: 'AwsSolutions-IAM5',
         reason: 'CloudFront GetDistribution requires wildcard resource as distributions are accessed by ID which is dynamic',
@@ -508,7 +508,7 @@ export class GroupChatAIFrontendStack extends cdk.Stack {
         id: 'AwsSolutions-L1',
         reason: 'Lambda function uses NODEJS_20_X which is the latest available runtime version'
       }
-    ], true);
+    ]);
 
     // Create custom resource
     const configJsonResource = new cdk.CustomResource(this, 'ConfigJsonResource', {
@@ -669,7 +669,7 @@ export class GroupChatAIFrontendStack extends cdk.Stack {
     }));
 
     // Suppress CDK Nag findings for legitimate wildcard usage in updateCognitoLambda
-    NagSuppressions.addResourceSuppressions(updateCognitoLambda, [
+    addNagSuppressions(updateCognitoLambda, [
       {
         id: 'AwsSolutions-IAM5',
         reason: 'Cognito UpdateUserPoolClient and DescribeUserPoolClient require wildcard resource as User Pool IDs are dynamic',
@@ -689,7 +689,7 @@ export class GroupChatAIFrontendStack extends cdk.Stack {
         id: 'AwsSolutions-L1',
         reason: 'Lambda function uses NODEJS_20_X which is the latest available runtime version'
       }
-    ], true);
+    ]);
 
 
     // Create custom resource

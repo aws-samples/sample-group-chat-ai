@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import { AwsSolutionsChecks, NagSuppressions } from 'cdk-nag';
+import { AwsSolutionsChecks } from 'cdk-nag';
+import { addNagSuppressions } from '../lib/nag-suppressions';
 import { GroupChatAIStack } from '../lib/group-chat-ai-stack';
 import { GroupChatAIFrontendStack } from '../lib/group-chat-ai-frontend-stack';
 import { getConfigLoader } from './config-loader';
@@ -17,6 +18,12 @@ const envConfig = {
   account,
   region,
 };
+
+// cdk-nag v3 reports the CDK assets bucket with the concrete account and region
+// when the stack environment is known, so acknowledge that exact finding too.
+const cdkAssetsBucketFinding = account
+  ? `Resource::arn:aws:s3:::cdk-hnb659fds-assets-${account}-${region}/*`
+  : 'Resource::arn:aws:s3:::cdk-hnb659fds-assets-*-*/*';
 
 // Determine which environment to deploy based on DEPLOY_ENV environment variable
 const deployEnv = process.env.DEPLOY_ENV;
@@ -70,15 +77,15 @@ if (shouldCreateEnvironment('dev')) {
   cdk.Tags.of(devFrontendStack).add('Environment', 'Development');
 
   // Add CDK Nag suppressions for CDK-managed resources
-  NagSuppressions.addStackSuppressions(devBackendStack, [
+  addNagSuppressions(devBackendStack, [
     {
       id: 'AwsSolutions-IAM4',
       reason: 'CDK-generated custom resource Lambdas use AWSLambdaBasicExecutionRole which is the AWS standard',
       appliesTo: ['Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole']
     }
-  ], true);
+  ]);
 
-  NagSuppressions.addStackSuppressions(devFrontendStack, [
+  addNagSuppressions(devFrontendStack, [
     {
       id: 'AwsSolutions-IAM4',
       reason: 'CDK-generated custom resource Lambdas use AWSLambdaBasicExecutionRole which is the AWS standard',
@@ -96,6 +103,7 @@ if (shouldCreateEnvironment('dev')) {
         'Action::s3:PutObject*',
         'Resource::*',
         'Resource::arn:aws:s3:::cdk-hnb659fds-assets-*-*/*',
+        cdkAssetsBucketFinding,
         'Resource::<FrontendBucketEFE2E19C.Arn>/*'
       ]
     },
@@ -103,7 +111,7 @@ if (shouldCreateEnvironment('dev')) {
       id: 'AwsSolutions-L1',
       reason: 'CDK-managed Lambda functions use runtime versions managed by AWS CDK'
     }
-  ], true);
+  ]);
 }
 
 // Staging environment
@@ -128,15 +136,15 @@ if (shouldCreateEnvironment('staging')) {
   cdk.Tags.of(stagingFrontendStack).add('Environment', 'Staging');
 
   // Add CDK Nag suppressions for staging environment
-  NagSuppressions.addStackSuppressions(stagingBackendStack, [
+  addNagSuppressions(stagingBackendStack, [
     {
       id: 'AwsSolutions-IAM4',
       reason: 'CDK-generated custom resource Lambdas use AWSLambdaBasicExecutionRole which is the AWS standard',
       appliesTo: ['Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole']
     }
-  ], true);
+  ]);
 
-  NagSuppressions.addStackSuppressions(stagingFrontendStack, [
+  addNagSuppressions(stagingFrontendStack, [
     {
       id: 'AwsSolutions-IAM4',
       reason: 'CDK-generated custom resource Lambdas use AWSLambdaBasicExecutionRole which is the AWS standard',
@@ -154,6 +162,7 @@ if (shouldCreateEnvironment('staging')) {
         'Action::s3:PutObject*',
         'Resource::*',
         'Resource::arn:aws:s3:::cdk-hnb659fds-assets-*-*/*',
+        cdkAssetsBucketFinding,
         'Resource::<FrontendBucketEFE2E19C.Arn>/*'
       ]
     },
@@ -161,7 +170,7 @@ if (shouldCreateEnvironment('staging')) {
       id: 'AwsSolutions-L1',
       reason: 'CDK-managed Lambda functions use runtime versions managed by AWS CDK'
     }
-  ], true);
+  ]);
 }
 
 // Production environment
@@ -186,15 +195,15 @@ if (shouldCreateEnvironment('prod')) {
   cdk.Tags.of(prodFrontendStack).add('Environment', 'Production');
 
   // Add CDK Nag suppressions for production environment
-  NagSuppressions.addStackSuppressions(prodBackendStack, [
+  addNagSuppressions(prodBackendStack, [
     {
       id: 'AwsSolutions-IAM4',
       reason: 'CDK-generated custom resource Lambdas use AWSLambdaBasicExecutionRole which is the AWS standard',
       appliesTo: ['Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole']
     }
-  ], true);
+  ]);
 
-  NagSuppressions.addStackSuppressions(prodFrontendStack, [
+  addNagSuppressions(prodFrontendStack, [
     {
       id: 'AwsSolutions-IAM4',
       reason: 'CDK-generated custom resource Lambdas use AWSLambdaBasicExecutionRole which is the AWS standard',
@@ -212,6 +221,7 @@ if (shouldCreateEnvironment('prod')) {
         'Action::s3:PutObject*',
         'Resource::*',
         'Resource::arn:aws:s3:::cdk-hnb659fds-assets-*-*/*',
+        cdkAssetsBucketFinding,
         'Resource::<FrontendBucketEFE2E19C.Arn>/*'
       ]
     },
@@ -219,11 +229,11 @@ if (shouldCreateEnvironment('prod')) {
       id: 'AwsSolutions-L1',
       reason: 'CDK-managed Lambda functions use runtime versions managed by AWS CDK'
     }
-  ], true);
+  ]);
 }
 
 
 // Apply CDK Nag checks for security and best practices
 console.log('🔍 Applying CDK Nag security and best practices checks...');
-cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));
+cdk.Validations.of(app).addPlugins(new AwsSolutionsChecks(app, { verbose: true }));
 

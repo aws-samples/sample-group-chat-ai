@@ -10,7 +10,7 @@ import * as cr from 'aws-cdk-lib/custom-resources';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
-import { NagSuppressions } from 'cdk-nag';
+import { addNagSuppressions } from './nag-suppressions';
 import { Construct } from 'constructs';
 import { getConfigLoader } from '../bin/config-loader';
 
@@ -133,7 +133,7 @@ export class GroupChatAIStack extends cdk.Stack {
     });
 
     // Suppress CDK Nag for logs bucket - logs bucket itself doesn't need access logging
-    NagSuppressions.addResourceSuppressions(fileStorageLogsBucket, [
+    addNagSuppressions(fileStorageLogsBucket, [
       {
         id: 'AwsSolutions-S1',
         reason: 'This bucket is used for access logs only and does not require its own access logging to prevent recursive logging',
@@ -206,7 +206,7 @@ export class GroupChatAIStack extends cdk.Stack {
     });
 
     // Suppress CDK Nag findings for Cognito as requested
-    NagSuppressions.addResourceSuppressions(this.userPool, [
+    addNagSuppressions(this.userPool, [
       {
         id: 'AwsSolutions-COG2',
         reason: 'MFA requirement suppressed per business requirements - application handles authentication flow without mandatory MFA'
@@ -214,6 +214,10 @@ export class GroupChatAIStack extends cdk.Stack {
       {
         id: 'AwsSolutions-COG3',
         reason: 'Advanced Security Mode enforcement suppressed per business requirements - basic security sufficient for current use case'
+      },
+      {
+        id: 'AwsSolutions-COG8',
+        reason: 'Plus feature plan (threat protection) not enabled per business requirements - same decision as AwsSolutions-COG3; basic security sufficient for current use case'
       }
     ]);
 
@@ -401,7 +405,7 @@ export class GroupChatAIStack extends cdk.Stack {
     taskRole.addToPolicy(s3PolicyStatement);
 
     // Suppress CDK Nag for legitimate Polly, Bedrock, DynamoDB and S3 wildcard usage - must apply to children (DefaultPolicy)
-    NagSuppressions.addResourceSuppressions(
+    addNagSuppressions(
       taskRole,
       [
         {
@@ -438,9 +442,7 @@ export class GroupChatAIStack extends cdk.Stack {
             'Resource::<FileStorageBucket10E371B0.Arn>/*',
           ]
         }
-      ],
-      true
-    );
+      ]);
 
 
 
@@ -509,7 +511,7 @@ export class GroupChatAIStack extends cdk.Stack {
     });
 
     // Suppress CDK Nag for S3 access logs - ALB log bucket doesn't need its own access logs
-    NagSuppressions.addResourceSuppressions(albLogsBucket, [
+    addNagSuppressions(albLogsBucket, [
       {
         id: 'AwsSolutions-S1',
         reason: 'ALB access logs bucket does not require additional server access logging - this is the logging destination itself'
@@ -538,7 +540,7 @@ export class GroupChatAIStack extends cdk.Stack {
     });
 
     // Suppress CDK Nag for CloudFront prefix list lookup - requires wildcard for EC2 describe operations
-    NagSuppressions.addResourceSuppressions(cloudFrontPrefixListLookup, [
+    addNagSuppressions(cloudFrontPrefixListLookup, [
       {
         id: 'AwsSolutions-IAM5',
         reason: 'EC2 DescribeManagedPrefixLists requires wildcard resource as prefix list IDs are dynamic and cannot be known at deployment time',
@@ -549,7 +551,7 @@ export class GroupChatAIStack extends cdk.Stack {
         reason: 'Custom resource Lambda uses AWSLambdaBasicExecutionRole which is the standard AWS managed policy for Lambda execution',
         appliesTo: ['Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole']
       }
-    ], true);
+    ]);
 
     // Get the CloudFront prefix list ID from the lookup result
     const cloudFrontPrefixListId = cloudFrontPrefixListLookup.getResponseField('PrefixLists.0.PrefixListId');
@@ -624,7 +626,7 @@ export class GroupChatAIStack extends cdk.Stack {
     this.service.loadBalancer.logAccessLogs(albLogsBucket, 'alb-access-logs');
 
     // Suppress CDK Nag for ECS task execution role - uses AWS managed policy for basic execution
-    NagSuppressions.addResourceSuppressions(this.service.taskDefinition.executionRole!, [
+    addNagSuppressions(this.service.taskDefinition.executionRole!, [
       {
         id: 'AwsSolutions-IAM4',
         reason: 'Task execution role uses standard AWS managed policy for ECS execution which provides minimal required permissions for ECR and CloudWatch Logs',
@@ -635,10 +637,10 @@ export class GroupChatAIStack extends cdk.Stack {
         reason: 'ECS task execution role requires wildcard permissions for ECR and CloudWatch Logs as resource names are dynamic during container execution',
         appliesTo: ['Resource::*']
       }
-    ], true);
+    ]);
 
     // Suppress CDK Nag for ECS Task Definition environment variables - using secrets for sensitive data
-    NagSuppressions.addResourceSuppressions(this.service.taskDefinition, [
+    addNagSuppressions(this.service.taskDefinition, [
       {
         id: 'AwsSolutions-ECS2',
         reason: 'Environment variables used are non-sensitive configuration values (NODE_ENV, PORT, etc). Sensitive values like LLM_MODEL and LLM_PROVIDER are moved to Parameter Store secrets'
@@ -651,7 +653,7 @@ export class GroupChatAIStack extends cdk.Stack {
     ]);
 
     // Suppress CDK Nag for ALB security group - CloudFront access is intentional and secure
-    NagSuppressions.addResourceSuppressions(albSecurityGroup, [
+    addNagSuppressions(albSecurityGroup, [
       {
         id: 'AwsSolutions-EC23',
         reason: 'ALB security group allows access from CloudFront managed prefix list, which is a secure and recommended pattern for CloudFront origins'
@@ -792,7 +794,7 @@ export class GroupChatAIStack extends cdk.Stack {
 
     // Apply stack-level NAG suppressions for file storage IAM wildcards
     // These must be applied at the stack level because the DefaultPolicy is auto-generated
-    NagSuppressions.addStackSuppressions(this, [
+    addNagSuppressions(this, [
       {
         id: 'AwsSolutions-IAM5',
         reason: 'Full access to file metadata table and index - GSI requires wildcard access pattern for query operations',

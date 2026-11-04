@@ -11,8 +11,8 @@ const SAMPLE_CONFIG = {
     dev: {
       backend: {
         models: {
-          personaModel: 'anthropic.claude-sonnet-4-20250514-v1:0',
-          routingModel: 'openai.gpt-oss-20b-1:0',
+          personaModel: 'us.anthropic.claude-sonnet-5-5',
+          routingModel: 'us.anthropic.claude-haiku-5-5',
           llmProvider: 'bedrock',
           routingProvider: 'bedrock'
         }
@@ -27,8 +27,8 @@ const SAMPLE_CONFIG = {
     staging: {
       backend: {
         models: {
-          personaModel: 'anthropic.claude-sonnet-4-20250514-v1:0',
-          routingModel: 'amazon.nova-pro-v1:0',
+          personaModel: 'us.anthropic.claude-sonnet-5-5',
+          routingModel: 'us.anthropic.claude-haiku-5-5',
           llmProvider: 'bedrock',
           routingProvider: 'bedrock'
         }
@@ -37,8 +37,8 @@ const SAMPLE_CONFIG = {
     prod: {
       backend: {
         models: {
-          personaModel: 'anthropic.claude-sonnet-4-20250514-v1:0',
-          routingModel: 'amazon.nova-pro-v1:0',
+          personaModel: 'us.anthropic.claude-sonnet-5-5',
+          routingModel: 'us.anthropic.claude-haiku-5-5',
           llmProvider: 'bedrock',
           routingProvider: 'bedrock'
         }
@@ -61,14 +61,14 @@ Configuration File Location:
   ${CONFIG_PATH}
 
 Model Configuration Options:
-  - personaModel: Model ID for AI persona responses (default: anthropic.claude-sonnet-4-20250514-v1:0)
-  - routingModel: Model ID for conversation routing (default: openai.gpt-oss-20b-1:0)
+  - personaModel: Model ID for AI persona responses (default: us.anthropic.claude-sonnet-5-5)
+  - routingModel: Model ID for conversation routing (default: us.anthropic.claude-haiku-5-5)
   - llmProvider: Provider for persona models (bedrock|openai|anthropic|ollama)
   - routingProvider: Provider for routing model (bedrock|openai|anthropic|ollama)
 
 Examples:
   # Bedrock models
-  "personaModel": "anthropic.claude-sonnet-4-20250514-v1:0"
+  "personaModel": "us.anthropic.claude-sonnet-5-5"
   "routingModel": "amazon.nova-pro-v1:0"
   
   # OpenAI models
@@ -264,8 +264,8 @@ function validateConfigFile() {
         if (envConfig.backend?.models) {
           console.log('  🤖 Models:');
           const models = envConfig.backend.models;
-          console.log(`     Persona Model: ${models.personaModel || 'anthropic.claude-sonnet-4-20250514-v1:0 (default)'}`);
-          console.log(`     Routing Model: ${models.routingModel || 'openai.gpt-oss-20b-1:0 (default)'}`);
+          console.log(`     Persona Model: ${models.personaModel || 'us.anthropic.claude-sonnet-5-5 (default)'}`);
+          console.log(`     Routing Model: ${models.routingModel || 'us.anthropic.claude-haiku-5-5 (default)'}`);
           console.log(`     LLM Provider: ${models.llmProvider || 'bedrock (default)'}`);
           console.log(`     Routing Provider: ${models.routingProvider || 'bedrock (default)'}`);
         } else {
@@ -352,12 +352,11 @@ async function interactiveConfig() {
   // Configure Persona Model
   console.log('Persona Model (for AI persona responses):');
   console.log('  Examples:');
-  console.log('    - anthropic.claude-sonnet-4-20250514-v1:0 (Bedrock Claude 4)');
-  console.log('    - us.anthropic.claude-3-5-sonnet-20241022-v2:0 (Bedrock Claude 3.5)');
+  console.log('    - us.anthropic.claude-sonnet-5-5 (Bedrock Claude Sonnet 5.5)');
   console.log('    - gpt-4 (OpenAI)');
-  console.log('    - claude-3-sonnet-20240229 (Anthropic Direct)');
+  console.log('    - claude-sonnet-5-5 (Anthropic Direct)');
   
-  const currentPersonaModel = models.personaModel || 'anthropic.claude-sonnet-4-20250514-v1:0';
+  const currentPersonaModel = models.personaModel || 'us.anthropic.claude-sonnet-5-5';
   const personaModel = await askQuestion(rl, `Enter persona model ID (${currentPersonaModel}): `);
   if (personaModel) {
     models.personaModel = personaModel;
@@ -368,12 +367,12 @@ async function interactiveConfig() {
   // Configure Routing Model
   console.log('\nRouting Model (for conversation routing decisions):');
   console.log('  Examples:');
-  console.log('    - openai.gpt-oss-20b-1:0 (Bedrock OpenAI)');
+  console.log('    - us.anthropic.claude-haiku-5-5 (Bedrock Claude Haiku 5.5)');
+  console.log('    - openai.gpt-oss-120b-1:0 (Bedrock OpenAI)');
   console.log('    - amazon.nova-pro-v1:0 (Bedrock Nova Pro)');
-  console.log('    - us.anthropic.claude-3-5-haiku-20241022-v1:0 (Bedrock Claude Haiku)');
-  console.log('    - gpt-3.5-turbo (OpenAI)');
+  console.log('  console.log('    - gpt-3.5-turbo (OpenAI)');
   
-  const currentRoutingModel = models.routingModel || 'openai.gpt-oss-20b-1:0';
+  const currentRoutingModel = models.routingModel || 'us.anthropic.claude-haiku-5-5';
   const routingModel = await askQuestion(rl, `Enter routing model ID (${currentRoutingModel}): `);
   if (routingModel) {
     models.routingModel = routingModel;

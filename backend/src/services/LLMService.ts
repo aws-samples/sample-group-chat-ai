@@ -15,6 +15,7 @@ import {
 } from '@group-chat-ai/shared';
 import { createLogger } from '../config/logger';
 import { ModelConfig } from '../config/ModelConfig';
+import { temperatureFor, thinkingOffFor } from '../config/modelCapabilities';
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
@@ -22,7 +23,7 @@ import axios from 'axios';
 import { ContextManagementService } from './ContextManagementService';
 
 // Fallback model for the direct Anthropic provider when none is configured.
-const DEFAULT_ANTHROPIC_MODEL = 'claude-sonnet-4-5';
+const DEFAULT_ANTHROPIC_MODEL = 'claude-sonnet-5-5';
 
 /**
  * Join the text blocks of an Anthropic Messages API response. Thinking,
@@ -710,7 +711,7 @@ Please analyze this image in the context of your role and provide relevant feedb
       const message = await this.anthropicClient.messages.create({
         model: this.config.model || DEFAULT_ANTHROPIC_MODEL,
         max_tokens: this.config.maxTokens,
-        temperature: this.config.temperature,
+        ...temperatureFor(this.config.model || DEFAULT_ANTHROPIC_MODEL, this.config.temperature),
         messages: [{ role: 'user', content: prompt }],
       });
 
@@ -754,7 +755,7 @@ Please analyze this image in the context of your role and provide relevant feedb
         ],
         inferenceConfig: {
           maxTokens: this.config.maxTokens,
-          temperature: this.config.temperature,
+          ...temperatureFor(modelId, this.config.temperature),
         },
       });
 
@@ -902,7 +903,7 @@ Please analyze this image in the context of your role and provide relevant feedb
         ],
         inferenceConfig: {
           maxTokens: this.config.maxTokens,
-          temperature: this.config.temperature,
+          ...temperatureFor(modelId, this.config.temperature),
         },
       });
 
@@ -912,7 +913,7 @@ Please analyze this image in the context of your role and provide relevant feedb
         throw new Error('No output received from Bedrock Converse API');
       }
 
-      const responseContent = response.output.message?.content?.[0]?.text;
+      const responseContent = response.output.message?.content?.find(block => block.text)?.text;
 
       if (!responseContent) {
         throw new Error('No content in Bedrock response');
@@ -1111,7 +1112,7 @@ Please analyze this image in the context of your role and provide relevant feedb
         const message = await this.anthropicClient.messages.create({
           model: anthropicModel,
           max_tokens: maxTokens,
-          temperature: temperature,
+          ...temperatureFor(anthropicModel, temperature),
           messages: [{ role: 'user', content: prompt }],
         });
 
@@ -1185,8 +1186,12 @@ Please analyze this image in the context of your role and provide relevant feedb
           ],
           inferenceConfig: {
             maxTokens: maxTokens,
-            temperature: temperature,
+            ...temperatureFor(routingModelId, temperature),
           },
+          // Routing needs a short, fast answer. Models that think by default
+          // (Claude 5.x) can otherwise spend the whole small token budget on
+          // reasoning and return no text.
+          ...thinkingOffFor(routingModelId),
         });
 
         logger.info('Sending Bedrock routing request', {
@@ -1481,13 +1486,13 @@ Please analyze this image in the context of your role and provide relevant feedb
         content: [{ text: prompt }],
       }],
       inferenceConfig: {
-        temperature: config.temperature,
+        ...temperatureFor(config.model, config.temperature),
         maxTokens: config.maxTokens,
       },
     });
 
     const response = await this.bedrockClient!.send(command);
-    const content = response.output?.message?.content?.[0]?.text;
+    const content = response.output?.message?.content?.find(block => block.text)?.text;
     
     if (!content) {
       throw new Error('No response content received from Bedrock');

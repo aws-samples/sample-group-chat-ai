@@ -34,14 +34,20 @@ const mockBedrockResponse = {
   metrics: { latencyMs: 150 },
 };
 
-// Mock ModelConfig to avoid Parameter Store calls
+// Mock ModelConfig to avoid Parameter Store calls. The model IDs are mutable
+// so tests can cover both models that accept temperature and models that
+// reject it (Claude 5.x); the service reads them when it is constructed.
+const mockModels = {
+  personaModel: 'anthropic.claude-3-sonnet-20240229-v1:0',
+  routingModel: 'anthropic.claude-3-haiku-20240307-v1:0',
+};
 jest.mock('../../config/ModelConfig', () => ({
   ModelConfig: {
     getInstance: () => ({
       getFullConfig: () =>
         Promise.resolve({
-          personaModel: 'anthropic.claude-3-sonnet-20240229-v1:0',
-          routingModel: 'anthropic.claude-3-haiku-20240307-v1:0',
+          personaModel: mockModels.personaModel,
+          routingModel: mockModels.routingModel,
           personaProvider: 'bedrock',
           routingProvider: 'bedrock',
         }),
@@ -298,5 +304,62 @@ describe('LLMService Bedrock ConverseCommand smoke test (aws-sdk-client-mock)', 
     expect(typeof input.inferenceConfig?.temperature).toBe('number');
     expect(input.inferenceConfig?.temperature).toBeGreaterThanOrEqual(0);
     expect(input.inferenceConfig?.temperature).toBeLessThanOrEqual(1);
+  });
+
+  describe('with Claude 5.5 models', () => {
+    beforeEach(async () => {
+      mockModels.personaModel = 'us.anthropic.claude-sonnet-5-5';
+      mockModels.routingModel = 'us.anthropic.claude-haiku-5-5';
+      llmService = new LLMService();
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      bedrockMock.resetHistory();
+    });
+
+    afterEach(() => {
+      mockModels.personaModel = 'anthropic.claude-3-sonnet-20240229-v1:0';
+      mockModels.routingModel = 'anthropic.claude-3-haiku-20240307-v1:0';
+    });
+
+    it('omits temperature, which these models reject, and keeps maxTokens', async () => {
+      await llmService.generatePersonaResponse(
+        createTestPersona({ personaId: 'sonnet-55', name: 'Sonnet Tester', role: 'Tester' }),
+        [],
+        'Check inference config'
+      );
+
+      const calls = bedrockMock.commandCalls(ConverseCommand);
+      expect(calls.length).toBeGreaterThan(0);
+      for (const call of calls) {
+        const input = call.args[0].input as ConverseCommandInput;
+        expect(input.inferenceConfig).toBeDefined();
+        expect(input.inferenceConfig).not.toHaveProperty('temperature');
+        expect(input.inferenceConfig).not.toHaveProperty('topP');
+        expect(input.inferenceConfig?.maxTokens).toBeGreaterThan(0);
+      }
+      const last = calls[calls.length - 1].args[0].input as ConverseCommandInput;
+      expect(last.modelId).toBe('us.anthropic.claude-sonnet-5-5');
+    });
+
+    it('returns the text block when the response also has reasoning content', async () => {
+      bedrockMock.on(ConverseCommand).resolves({
+        ...mockBedrockResponse,
+        output: {
+          message: {
+            role: 'assistant' as const,
+            content: [
+              { reasoningContent: { reasoningText: { text: 'internal reasoning' } } },
+              { text: 'Visible answer' },
+            ],
+          },
+        },
+      });
+
+      const response = await llmService.generatePersonaResponse(
+        createTestPersona({ personaId: 'reasoning', name: 'Reasoning Tester', role: 'Tester' }),
+        [],
+        'Answer briefly'
+      );
+      expect(response).toBe('Visible answer');
+    });
   });
 });

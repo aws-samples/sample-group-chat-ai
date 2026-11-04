@@ -141,7 +141,7 @@ Group Chat AI est une plateforme d'IA conversationnelle sophistiquée en temps r
 ### 5. Intégration des services IA/ML
 
 #### **Amazon Bedrock**
-- **Modèles** : Claude 4 (anthropic.claude-sonnet-4-5-20250929-v1:0)
+- **Modèles** : Claude Sonnet 5.5 (us.anthropic.claude-sonnet-5-5), Claude Haiku 5.5 (us.anthropic.claude-haiku-5-5)
 - **Usage** :
   - Génération de conversations pour les personas IA
   - Analyse de contenu et décisions de routage

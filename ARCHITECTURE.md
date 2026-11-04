@@ -142,7 +142,7 @@
   ### 5. AI/ML Services Integration  
     
   #### **Amazon Bedrock**  
-  - **Models**: Claude 4 (anthropic.claude-sonnet-4-5-20250929-v1:0)  
+  - **Models**: Claude Sonnet 5.5 (us.anthropic.claude-sonnet-5-5), Claude Haiku 5.5 (us.anthropic.claude-haiku-5-5)  
   - **Usage**:  
     - Conversation generation for AI personas  
     - Content analysis and routing decisions  

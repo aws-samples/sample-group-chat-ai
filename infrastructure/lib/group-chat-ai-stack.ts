@@ -343,7 +343,8 @@ export class GroupChatAIStack extends cdk.Stack {
       ],
     }));
 
-    // Add permissions for Amazon Bedrock Claude 4 (specific models only)
+    // Add permissions for Amazon Bedrock model invocation. The resource is a
+    // wildcard because persona and routing models are configurable (SSM).
     const bedrockPolicyStatement = new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: [
@@ -474,14 +475,14 @@ export class GroupChatAIStack extends cdk.Stack {
 
     new ssm.StringParameter(this, 'PersonaModelParameter', {
       parameterName: `/group-chat-ai/${environment}/persona-model`,
-      stringValue: modelConfig.personaModel || 'openai.gpt-oss-200b-1:0',
+      stringValue: modelConfig.personaModel || 'us.anthropic.claude-sonnet-5-5',
       description: `Persona Model configuration for Group Chat AI ${environment} environment`,
       tier: ssm.ParameterTier.STANDARD,
     });
 
     new ssm.StringParameter(this, 'RoutingModelParameter', {
       parameterName: `/group-chat-ai/${environment}/routing-model`,
-      stringValue: modelConfig.routingModel || 'us.anthropic.claude-sonnet-4-5-20250929-v1:0',
+      stringValue: modelConfig.routingModel || 'us.anthropic.claude-haiku-5-5',
       description: `Routing Model configuration for Group Chat AI ${environment} environment`,
       tier: ssm.ParameterTier.STANDARD,
     });

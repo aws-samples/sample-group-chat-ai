@@ -298,7 +298,7 @@ npm run deploy:dev # substitua :dev por staging ou prod para esses ambientes
 ```
 
 ## ⚠️ Aviso sobre Região de Deployment!
-Por padrão, o Modelo de Roteamento para Bedrock é OpenAI gpt-oss:20b (`openai.gpt-oss-20b-1:0`). O Modelo de Persona aproveita Anthropic Claude 4 Sonnet (`anthropic.claude-sonnet-4-20250514-v1:0`). Por favor, certifique-se de que está fazendo deploy em uma região que suporta ambos os modelos, ou configure modelos alternativos.
+Por padrão, o Modelo de Roteamento para Bedrock é Anthropic Claude Haiku 5.5 (`us.anthropic.claude-haiku-5-5`). O Modelo de Persona aproveita Anthropic Claude Sonnet 5.5 (`us.anthropic.claude-sonnet-5-5`). Por favor, certifique-se de que está fazendo deploy em uma região que suporta ambos os modelos, ou configure modelos alternativos.
 
 ## 🧪 Testes
 

@@ -15,7 +15,7 @@ import {
 } from '@group-chat-ai/shared';
 import { createLogger } from '../config/logger';
 import { ModelConfig } from '../config/ModelConfig';
-import { temperatureFor } from '../config/modelCapabilities';
+import { temperatureFor, thinkingOffFor } from '../config/modelCapabilities';
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
@@ -1188,6 +1188,10 @@ Please analyze this image in the context of your role and provide relevant feedb
             maxTokens: maxTokens,
             ...temperatureFor(routingModelId, temperature),
           },
+          // Routing needs a short, fast answer. Models that think by default
+          // (Claude 5.x) can otherwise spend the whole small token budget on
+          // reasoning and return no text.
+          ...thinkingOffFor(routingModelId),
         });
 
         logger.info('Sending Bedrock routing request', {

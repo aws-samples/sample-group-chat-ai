@@ -1,7 +1,35 @@
 // Copyright 2025 Amazon.com, Inc. or its affiliates.
 // SPDX-License-Identifier: MIT-0
 
-import { supportsSamplingParameters, temperatureFor } from '../../config/modelCapabilities';
+import {
+  supportsSamplingParameters,
+  temperatureFor,
+  thinkingOffFor,
+} from '../../config/modelCapabilities';
+
+describe('thinkingOffFor', () => {
+  it('uses "disabled" for Haiku 5.x', () => {
+    expect(thinkingOffFor('us.anthropic.claude-haiku-5-5')).toEqual({
+      additionalModelRequestFields: { thinking: { type: 'disabled' } },
+    });
+  });
+
+  it('uses "between_tools" for Sonnet 5.x', () => {
+    expect(thinkingOffFor('global.anthropic.claude-sonnet-5-5')).toEqual({
+      additionalModelRequestFields: { thinking: { type: 'between_tools' } },
+    });
+  });
+
+  it.each([
+    'us.anthropic.claude-opus-5-5',
+    'us.anthropic.claude-haiku-4-5-20251001-v1:0',
+    'us.anthropic.claude-sonnet-4-5-20250929-v1:0',
+    'amazon.nova-pro-v1:0',
+    undefined,
+  ])('sends nothing for %s', modelId => {
+    expect(thinkingOffFor(modelId)).toEqual({});
+  });
+});
 
 describe('supportsSamplingParameters', () => {
   it.each([

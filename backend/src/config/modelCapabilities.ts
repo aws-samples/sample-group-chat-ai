@@ -47,3 +47,25 @@ export function temperatureFor(
   }
   return { temperature };
 }
+
+const CLAUDE_5_FAMILY = /claude-(opus|sonnet|haiku)-5(?:-\d{1,2})?(?![0-9])/;
+
+/**
+ * Converse `additionalModelRequestFields` that turn extended thinking off, for
+ * Claude 5.x models that think by default. Each family takes a different value
+ * (checked against Amazon Bedrock): Haiku 5.x accepts `disabled`, Sonnet 5.x
+ * accepts only `between_tools`, and Opus 5.x cannot turn thinking off, so it
+ * gets nothing. Every other model gets nothing.
+ */
+export function thinkingOffFor(modelId: string | undefined): {
+  additionalModelRequestFields?: { thinking: { type: string } };
+} {
+  const family = modelId ? CLAUDE_5_FAMILY.exec(modelId)?.[1] : undefined;
+  if (family === 'haiku') {
+    return { additionalModelRequestFields: { thinking: { type: 'disabled' } } };
+  }
+  if (family === 'sonnet') {
+    return { additionalModelRequestFields: { thinking: { type: 'between_tools' } } };
+  }
+  return {};
+}

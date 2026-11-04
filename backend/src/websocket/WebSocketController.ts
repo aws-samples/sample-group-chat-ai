@@ -15,6 +15,7 @@ import { createLogger } from '../config/logger';
 import { SessionWebSocketManager } from './SessionWebSocketManager';
 import { SessionService } from '../services/SessionService';
 import { UserSessionStorage } from '../services/UserSessionStorage';
+import { FrameDecision, WebSocketRateLimiter, WS_CLOSE_RATE_LIMITED } from './rateLimiter';
 
 const logger = createLogger();
 
@@ -22,11 +23,42 @@ export class WebSocketController {
   private sessionWebSocketManager: SessionWebSocketManager;
   private sessionService: SessionService;
   private userSessionStorage: UserSessionStorage;
+  private rateLimiter?: WebSocketRateLimiter;
 
-  constructor(sessionService?: SessionService, userSessionStorage?: UserSessionStorage) {
+  constructor(
+    sessionService?: SessionService,
+    userSessionStorage?: UserSessionStorage,
+    rateLimiter?: WebSocketRateLimiter
+  ) {
     this.sessionWebSocketManager = new SessionWebSocketManager();
     this.sessionService = sessionService || new SessionService();
     this.userSessionStorage = userSessionStorage || new UserSessionStorage();
+    this.rateLimiter = rateLimiter;
+  }
+
+  /**
+   * Apply a rate-limit decision. Returns true when the frame may be processed.
+   * A rejected frame is dropped with a structured `error` frame; a connection
+   * that keeps exceeding the limit is closed with 4429.
+   */
+  private applyRateLimit(ws: WebSocket, sessionId: string, decision: FrameDecision): boolean {
+    if (decision === 'allow') {
+      return true;
+    }
+
+    this.sessionWebSocketManager.sendErrorToSession(
+      sessionId,
+      'Rate limit exceeded',
+      'Too many messages. Please wait a moment and try again.'
+    );
+
+    if (decision === 'close') {
+      logger.warn('Closing WebSocket after repeated rate-limit violations', { sessionId });
+      ws.close(WS_CLOSE_RATE_LIMITED, 'Rate limit exceeded');
+    } else {
+      logger.warn('WebSocket message dropped - rate limit exceeded', { sessionId });
+    }
+    return false;
   }
 
   /**
@@ -84,6 +116,11 @@ export class WebSocketController {
         return;
       }
 
+      // Flood guard on every frame, before any parsing work.
+      if (this.rateLimiter && !this.applyRateLimit(ws, sessionId, this.rateLimiter.checkFrame(ws))) {
+        return;
+      }
+
       // Parse message
       let message: WebSocketMessage;
       try {
@@ -112,6 +149,14 @@ export class WebSocketController {
 
       switch (message.type) {
         case WebSocketMessageType.USER_MESSAGE:
+          // User messages start LLM (Bedrock) calls: limit them per
+          // connection and per user, and drop over-limit ones unprocessed.
+          if (
+            this.rateLimiter &&
+            !this.applyRateLimit(ws, sessionId, this.rateLimiter.checkUserMessage(ws))
+          ) {
+            return;
+          }
           await this.handleUserMessage(sessionId, message.data as UserMessageWebSocket);
           break;
 

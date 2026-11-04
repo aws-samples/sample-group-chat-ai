@@ -9,21 +9,48 @@ import { WebSocketController } from './WebSocketController';
 import { SessionService } from '../services/SessionService';
 import { UserSessionStorage } from '../services/UserSessionStorage';
 import { verifyAccessToken, AuthenticatedIdentity } from '../middleware/auth';
+import { TRUST_PROXY_HOPS } from '../config/trustProxy';
+import { WebSocketRateLimiter, getClientIp, WS_CLOSE_RATE_LIMITED } from './rateLimiter';
 
 const logger = createLogger();
 
 export class WebSocketServer {
   private wss: WebSocket.WebSocketServer;
   private webSocketController: WebSocketController;
+  private rateLimiter: WebSocketRateLimiter;
 
-  constructor(server: HttpServer, sessionService?: SessionService, userSessionStorage?: UserSessionStorage) {
-    this.webSocketController = new WebSocketController(sessionService, userSessionStorage);
+  constructor(
+    server: HttpServer,
+    sessionService?: SessionService,
+    userSessionStorage?: UserSessionStorage,
+    rateLimiter?: WebSocketRateLimiter
+  ) {
+    this.rateLimiter = rateLimiter || new WebSocketRateLimiter();
+    this.webSocketController = new WebSocketController(
+      sessionService,
+      userSessionStorage,
+      this.rateLimiter
+    );
 
     // Create WebSocket server that shares the HTTP server
     this.wss = new WebSocket.WebSocketServer({
       server,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      verifyClient: (info: any, cb: (res: boolean, code?: number, message?: string) => void) => {
+      verifyClient: (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        info: any,
+        cb: (res: boolean, code?: number, message?: string, headers?: Record<string, string>) => void
+      ) => {
+        // Limit handshake attempts per client IP before any token
+        // verification work, mirroring the REST limiter running ahead of auth.
+        const clientIp = getClientIp(info.req, TRUST_PROXY_HOPS);
+        if (!this.rateLimiter.allowHandshake(clientIp)) {
+          logger.warn('WebSocket connection rejected - handshake rate limit', { clientIp });
+          cb(false, 429, 'Too Many Requests', {
+            'Retry-After': String(this.rateLimiter.handshakeRetryAfterSeconds(clientIp)),
+          });
+          return;
+        }
+
         const url = parseUrl(info.req.url || '', true);
         const sessionId = this.extractSessionIdFromUrl(url.pathname || '');
 
@@ -48,6 +75,17 @@ export class WebSocketServer {
 
         verifyAccessToken(token)
           .then(identity => {
+            // Cheap early rejection; the connection handler enforces the cap
+            // authoritatively when it registers the socket.
+            if (this.rateLimiter.isAtConnectionCap(identity.sub)) {
+              logger.warn('WebSocket connection rejected - per-user connection cap', {
+                sessionId,
+                authenticatedSub: identity.sub,
+              });
+              cb(false, 429, 'Too Many Connections');
+              return;
+            }
+
             // Stash the verified identity on the request for the connection
             // handler (ws passes the same req object through to 'connection').
             (info.req as { auth?: AuthenticatedIdentity }).auth = identity;
@@ -92,6 +130,18 @@ export class WebSocketServer {
           ws.close(1008, 'Unauthorized');
           return;
         }
+
+        // Per-user concurrent connection cap. Registration and the count are
+        // synchronous, so concurrent handshakes cannot overshoot the cap.
+        if (!this.rateLimiter.registerConnection(ws, identity.sub)) {
+          logger.warn('WebSocket connection closed - per-user connection cap', {
+            sessionId,
+            authenticatedSub: identity.sub,
+          });
+          ws.close(WS_CLOSE_RATE_LIMITED, 'Too many connections');
+          return;
+        }
+        ws.once('close', () => this.rateLimiter.release(ws));
 
         logger.info('New WebSocket connection', { sessionId, authenticatedSub: identity.sub });
 
@@ -148,6 +198,8 @@ export class WebSocketServer {
    */
   shutdown(): void {
     logger.info('Shutting down WebSocket server');
+
+    this.rateLimiter.stop();
 
     // Close all connections
     this.webSocketController.closeAllConnections();

@@ -13,6 +13,7 @@ import { createLogger } from './config/logger';
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
 import { authMiddleware } from './middleware/auth';
+import { TRUST_PROXY_HOPS } from './config/trustProxy';
 import { createSessionRoutes } from './controllers/sessionController';
 import { createUserSessionRoutes } from './controllers/userSessionController';
 import { personaRoutes } from './controllers/personaController';
@@ -33,8 +34,8 @@ const PORT = process.env.PORT || 3000;
 // Behind CloudFront -> ALB there are two trusted proxy hops in front of the
 // app. Set a bounded hop count (NOT `true`) so Express derives the real client
 // IP from X-Forwarded-For for the rate limiter, without letting a client spoof
-// X-Forwarded-For to escape it. Overridable for other deployment topologies.
-app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS) || 2);
+// X-Forwarded-For to escape it. The WebSocket upgrade path uses the same value.
+app.set('trust proxy', TRUST_PROXY_HOPS);
 
 // Security middleware
 app.use(helmet());

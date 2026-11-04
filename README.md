@@ -271,6 +271,10 @@ The system supports 14 languages for personas and documentation:
 - **Session Isolation**: Each session maintains separate context
 - **Error Handling**: Graceful error handling with user-friendly messages
 - **Rate Limiting**: Built-in protection against abuse
+  - REST API (`/api/*`): 300 requests per client IP per 15 minutes (`RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS`).
+  - WebSocket messages: 30 chat messages per minute per connection with a burst of 10 (`WS_MSG_RATE_LIMIT_MAX`, `WS_MSG_RATE_LIMIT_WINDOW_MS`, `WS_MSG_RATE_LIMIT_BURST`), and 60 per minute per user across all of that user's connections (`WS_USER_MSG_RATE_LIMIT_MAX`). An over-limit message is dropped before any model call and answered with an `error` frame. A connection that exceeds the limit 10 times in a minute is closed with code 4429.
+  - WebSocket connections: at most 5 open connections per user (`WS_MAX_CONNECTIONS_PER_USER`) and 20 handshakes per client IP per minute (`WS_CONN_RATE_LIMIT_MAX`, `WS_CONN_RATE_LIMIT_WINDOW_MS`).
+  - All limits are kept in memory in each backend instance. With more than one instance, each enforces its own limits; enforcing them across instances needs a shared store such as Redis or DynamoDB. See `backend/.env.example` for every setting.
 - **HTTPS**: All communications encrypted in production
 
 ## 📊 Monitoring & Observability

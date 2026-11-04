@@ -298,7 +298,7 @@ npm run deploy:dev # staging または prod 環境の場合は :dev を置き換
 ```
 
 ## ⚠️ デプロイリージョン警告！
-デフォルトでは、BedrockのRouting ModelはOpenAI gpt-oss:20b (`openai.gpt-oss-20b-1:0`)です。Persona ModelはAnthropic Claude 4 Sonnet (`anthropic.claude-sonnet-4-20250514-v1:0`)を活用します。両方のモデルをサポートするリージョンにデプロイしているか、代替モデルを設定していることを確認してください。
+デフォルトでは、BedrockのRouting ModelはAnthropic Claude Haiku 5.5 (`us.anthropic.claude-haiku-5-5`)です。Persona ModelはAnthropic Claude Sonnet 5.5 (`us.anthropic.claude-sonnet-5-5`)を活用します。両方のモデルをサポートするリージョンにデプロイしているか、代替モデルを設定していることを確認してください。
 
 ## 🧪 テスト
 

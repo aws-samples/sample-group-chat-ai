@@ -298,7 +298,7 @@ npm run deploy:dev # sostituisci :dev con staging o prod per quegli ambienti
 ```
 
 ## ⚠️ Avviso Regione Deployment!
-Per impostazione predefinita, il Routing Model per Bedrock è OpenAI gpt-oss:20b (`openai.gpt-oss-20b-1:0`). Il Persona Model sfrutta Anthropic Claude 4 Sonnet (`anthropic.claude-sonnet-4-20250514-v1:0`). Assicurati di distribuire in una regione che supporta entrambi i modelli, o configura modelli alternativi.
+Per impostazione predefinita, il Routing Model per Bedrock è Anthropic Claude Haiku 5.5 (`us.anthropic.claude-haiku-5-5`). Il Persona Model sfrutta Anthropic Claude Sonnet 5.5 (`us.anthropic.claude-sonnet-5-5`). Assicurati di distribuire in una regione che supporta entrambi i modelli, o configura modelli alternativi.
 
 ## 🧪 Testing
 

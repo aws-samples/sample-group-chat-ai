@@ -298,7 +298,7 @@ npm run deploy:dev # reemplazar :dev con staging o prod para esos entornos
 ```
 
 ## ⚠️ ¡Advertencia de Región de Despliegue!
-Por defecto, el Modelo de Enrutamiento para Bedrock es OpenAI gpt-oss:20b (`openai.gpt-oss-20b-1:0`). El Modelo de Persona aprovecha Anthropic Claude 4 Sonnet (`anthropic.claude-sonnet-4-20250514-v1:0`). Por favor asegúrate de estar desplegando en una región que soporte ambos modelos, o configura modelos alternativos.
+Por defecto, el Modelo de Enrutamiento para Bedrock es Anthropic Claude Haiku 5.5 (`us.anthropic.claude-haiku-5-5`). El Modelo de Persona aprovecha Anthropic Claude Sonnet 5.5 (`us.anthropic.claude-sonnet-5-5`). Por favor asegúrate de estar desplegando en una región que soporte ambos modelos, o configura modelos alternativos.
 
 ## 🧪 Pruebas
 

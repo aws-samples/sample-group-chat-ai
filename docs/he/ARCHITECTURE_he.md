@@ -141,7 +141,7 @@ Group Chat AI היא פלטפורמת AI שיחה מתקדמת בזמן אמת �
 ### 5. אינטגרציה שירותי AI/ML
 
 #### **Amazon Bedrock**
-- **מודלים**: Claude 4 (us.anthropic.claude-sonnet-4-20250514-v1:0)
+- **מודלים**: Claude Sonnet 5.5 (us.anthropic.claude-sonnet-5-5), Claude Haiku 5.5 (us.anthropic.claude-haiku-5-5)
 - **שימוש**:
   - יצירת שיחות לפרסונות AI
   - ניתוח תוכן והחלטות ניתוב

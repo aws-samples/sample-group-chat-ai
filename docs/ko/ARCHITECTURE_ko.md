@@ -141,7 +141,7 @@ Group Chat AI는 사용자가 여러 AI 페르소나와 협업적 토론에 참�
 ### 5. AI/ML 서비스 통합
 
 #### **Amazon Bedrock**
-- **모델**: Claude 4 (anthropic.claude-sonnet-4-5-20250929-v1:0)
+- **모델**: Claude Sonnet 5.5 (us.anthropic.claude-sonnet-5-5), Claude Haiku 5.5 (us.anthropic.claude-haiku-5-5)
 - **사용**:
   - AI 페르소나를 위한 대화 생성
   - 콘텐츠 분석 및 라우팅 결정

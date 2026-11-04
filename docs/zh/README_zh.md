@@ -300,7 +300,7 @@ npm run deploy:dev # 将 :dev 替换为 staging 或 prod 以部署到相应环�
 ```
 
 ## ⚠️ 部署区域警告！
-默认情况下，Bedrock 的路由模型是 OpenAI gpt-oss:20b (`openai.gpt-oss-20b-1:0`)。角色模型利用 Anthropic Claude 4 Sonnet (`anthropic.claude-sonnet-4-20250514-v1:0`)。请确保您部署到支持这两个模型的区域，或配置替代模型。
+默认情况下，Bedrock 的路由模型是 Anthropic Claude Haiku 5.5 (`us.anthropic.claude-haiku-5-5`)。角色模型利用 Anthropic Claude Sonnet 5.5 (`us.anthropic.claude-sonnet-5-5`)。请确保您部署到支持这两个模型的区域，或配置替代模型。
 
 ## 🧪 测试
 

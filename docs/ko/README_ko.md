@@ -298,7 +298,7 @@ npm run deploy:dev # 스테이징 또는 프로덕션 환경의 경우 :dev를 s
 ```
 
 ## ⚠️ 배포 지역 경고!
-기본적으로 Bedrock의 라우팅 모델은 OpenAI gpt-oss:20b (`openai.gpt-oss-20b-1:0`)입니다. 페르소나 모델은 Anthropic Claude 4 Sonnet (`anthropic.claude-sonnet-4-20250514-v1:0`)을 활용합니다. 두 모델을 모두 지원하는 지역에 배포하거나 대체 모델을 설정하시기 바랍니다.
+기본적으로 Bedrock의 라우팅 모델은 Anthropic Claude Haiku 5.5 (`us.anthropic.claude-haiku-5-5`)입니다. 페르소나 모델은 Anthropic Claude Sonnet 5.5 (`us.anthropic.claude-sonnet-5-5`)을 활용합니다. 두 모델을 모두 지원하는 지역에 배포하거나 대체 모델을 설정하시기 바랍니다.
 
 ## 🧪 테스트
 

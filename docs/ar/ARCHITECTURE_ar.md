@@ -141,7 +141,7 @@ Group Chat AI هي منصة ذكاء اصطناعي محادثة متطورة ف
 ### 5. تكامل خدمات الذكاء الاصطناعي/التعلم الآلي
 
 #### **Amazon Bedrock**
-- **النماذج**: Claude 4 (anthropic.claude-sonnet-4-5-20250929-v1:0)
+- **النماذج**: Claude Sonnet 5.5 (us.anthropic.claude-sonnet-5-5), Claude Haiku 5.5 (us.anthropic.claude-haiku-5-5)
 - **الاستخدام**:
   - توليد المحادثات لشخصيات الذكاء الاصطناعي
   - تحليل المحتوى وقرارات التوجيه

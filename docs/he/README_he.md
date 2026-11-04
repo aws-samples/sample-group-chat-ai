@@ -298,7 +298,7 @@ npm run deploy:dev # החלף :dev ב-staging או prod עבור הסביבות 
 ```
 
 ## ⚠️ אזהרת אזור פריסה!
-כברירת מחדל, מודל הניתוב עבור Bedrock הוא OpenAI gpt-oss:20b (`openai.gpt-oss-20b-1:0`). מודל הפרסונה מנצל Anthropic Claude 4 Sonnet (`anthropic.claude-sonnet-4-20250514-v1:0`). אנא וודא שאתה פורס לאזור התומך בשני המודלים, או הגדר מודלים חלופיים.
+כברירת מחדל, מודל הניתוב עבור Bedrock הוא Anthropic Claude Haiku 5.5 (`us.anthropic.claude-haiku-5-5`). מודל הפרסונה מנצל Anthropic Claude Sonnet 5.5 (`us.anthropic.claude-sonnet-5-5`). אנא וודא שאתה פורס לאזור התומך בשני המודלים, או הגדר מודלים חלופיים.
 
 ## 🧪 בדיקות
 

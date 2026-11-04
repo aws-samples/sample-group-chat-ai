@@ -299,7 +299,7 @@ npm run deploy:dev # استبدال :dev بـ staging أو prod لتلك الب�
 ```
 
 ## ⚠️ تحذير منطقة النشر!
-افتراضيًا، نموذج التوجيه لـ Bedrock هو OpenAI gpt-oss:20b (`openai.gpt-oss-20b-1:0`). نموذج الشخصية يستفيد من Anthropic Claude 4 Sonnet (`anthropic.claude-sonnet-4-20250514-v1:0`). يرجى التأكد من أنك تنشر في منطقة تدعم كلا النموذجين، أو تكوين نماذج بديلة.
+افتراضيًا، نموذج التوجيه لـ Bedrock هو Anthropic Claude Haiku 5.5 (`us.anthropic.claude-haiku-5-5`). نموذج الشخصية يستفيد من Anthropic Claude Sonnet 5.5 (`us.anthropic.claude-sonnet-5-5`). يرجى التأكد من أنك تنشر في منطقة تدعم كلا النموذجين، أو تكوين نماذج بديلة.
 
 ## 🧪 الاختبار
 

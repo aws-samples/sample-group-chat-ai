@@ -134,7 +134,7 @@ export AWS_REGION=us-east-1
 ```
 
 **Required Permissions**: Your AWS user/role needs:
-- `bedrock:InvokeModel` for `us.anthropic.claude-3-haiku-20240307-v1:0`
+- `bedrock:InvokeModel` for the translation model configured in `frontend/scripts/translation-service.cjs`
 
 ## Configuration
 

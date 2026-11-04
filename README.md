@@ -300,7 +300,7 @@ npm run deploy:dev # replace :dev with staging or prod for those environments
 ```
 
 ## ⚠️ Deployment Region Warning!
-By default, the Routing Model for Bedrock is OpenAI gpt-oss:20b (`openai.gpt-oss-20b-1:0`). The Persona Model leverages Anthropic Claude 4 Sonnet (`anthropic.claude-sonnet-4-20250514-v1:0`). Please ensure you are deploying to a region that supports both models, or configure alternative models.
+By default, the Routing Model for Bedrock is Anthropic Claude Haiku 5.5 (`us.anthropic.claude-haiku-5-5`). The Persona Model leverages Anthropic Claude Sonnet 5.5 (`us.anthropic.claude-sonnet-5-5`). Please ensure you are deploying to a region that supports both models, or configure alternative models.
 
 ## 🧪 Testing
 

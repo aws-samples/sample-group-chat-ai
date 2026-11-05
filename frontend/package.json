@@ -33,7 +33,7 @@
     "@aws-sdk/client-bedrock-runtime": "^3.1147.0",
     "@cloudscape-design/components": "^3.0.1081",
     "@cloudscape-design/design-tokens": "3.0.0",
-    "@cloudscape-design/global-styles": "1.0.0",
+    "@cloudscape-design/global-styles": "1.0.71",
     "@group-chat-ai/shared": "1.0.0",
     "@types/node": "^24.3.1",
     "@vitejs/plugin-react": "^5.0.2",

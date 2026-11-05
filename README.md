@@ -303,6 +303,8 @@ cd infrastructure
 npm run deploy:dev # replace :dev with staging or prod for those environments
 ```
 
+The backend runs on x86_64 (`linux/amd64`) Fargate, and the CDK stack builds its container image for that platform no matter which machine you deploy from. On an ARM machine (Apple silicon, Graviton), Docker must be able to build amd64 images. Docker Desktop can do this out of the box. On Linux, install QEMU emulation once with `docker run --privileged --rm tonistiigi/binfmt --install amd64`. The cross-architecture build is slower than a native one.
+
 ## ⚠️ Deployment Region Warning!
 By default, the Routing Model for Bedrock is Anthropic Claude Haiku 5.5 (`us.anthropic.claude-haiku-5-5`). The Persona Model leverages Anthropic Claude Sonnet 5.5 (`us.anthropic.claude-sonnet-5-5`). Please ensure you are deploying to a region that supports both models, or configure alternative models.
 

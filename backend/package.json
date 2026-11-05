@@ -19,7 +19,7 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist",
     "docker:build": "docker build -t group-chat-ai-backend .",
-    "docker:run": "docker run -p 3000:3000 group-chat-ai-backend"
+    "docker:run": "docker run -p 127.0.0.1:3000:3000 group-chat-ai-backend"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.133.0",

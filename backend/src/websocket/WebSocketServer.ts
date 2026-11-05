@@ -14,6 +14,18 @@ import { WebSocketRateLimiter, getClientIp, WS_CLOSE_RATE_LIMITED } from './rate
 
 const logger = createLogger();
 
+/**
+ * ws verifyClient callback. On rejection, `code` is the HTTP status of the
+ * upgrade response (the handshake never became a WebSocket), so it must be a
+ * real HTTP status such as 400/401/429, never a WebSocket close code.
+ */
+type VerifyClientCallback = (
+  res: boolean,
+  code?: number,
+  message?: string,
+  headers?: Record<string, string>
+) => void;
+
 export class WebSocketServer {
   private wss: WebSocket.WebSocketServer;
   private webSocketController: WebSocketController;
@@ -38,75 +50,110 @@ export class WebSocketServer {
       verifyClient: (
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         info: any,
-        cb: (res: boolean, code?: number, message?: string, headers?: Record<string, string>) => void
+        cb: VerifyClientCallback
       ) => {
-        // Limit handshake attempts per client IP before any token
-        // verification work, mirroring the REST limiter running ahead of auth.
-        const clientIp = getClientIp(info.req, TRUST_PROXY_HOPS);
-        if (!this.rateLimiter.allowHandshake(clientIp)) {
-          logger.warn('WebSocket connection rejected - handshake rate limit', { clientIp });
-          cb(false, 429, 'Too Many Requests', {
-            'Retry-After': String(this.rateLimiter.handshakeRetryAfterSeconds(clientIp)),
+        // A rejected handshake never becomes a WebSocket, so `code` here is the
+        // HTTP status of the upgrade response, not a WebSocket close code. ws
+        // writes it verbatim into the status line; a close code such as 1008
+        // yields "HTTP/1.1 1008 undefined", which the ALB reports as a 502.
+        try {
+          this.verifyHandshake(info, cb);
+        } catch (error) {
+          // Fail closed on anything unexpected rather than letting the throw
+          // escape the HTTP server's 'upgrade' listener.
+          logger.error('WebSocket handshake verification failed unexpectedly', {
+            reason: error instanceof Error ? error.message : 'unknown',
           });
-          return;
+          cb(false, 500, 'Internal Server Error');
         }
-
-        const url = parseUrl(info.req.url || '', true);
-        const sessionId = this.extractSessionIdFromUrl(url.pathname || '');
-
-        if (!sessionId) {
-          logger.warn('WebSocket connection rejected - no session ID', {
-            url: info.req.url,
-            pathname: url.pathname,
-            origin: info.origin,
-          });
-          cb(false, 1008, 'Invalid session ID');
-          return;
-        }
-
-        // Fail-closed authentication: the browser WebSocket API cannot set an
-        // Authorization header, so the access token is passed as the `token`
-        // query parameter (or `access_token`). verifyAccessToken enforces the
-        // same Cognito verification and AUTH_DISABLED policy as the HTTP API.
-        const token =
-          (typeof url.query.token === 'string' && url.query.token) ||
-          (typeof url.query.access_token === 'string' && url.query.access_token) ||
-          null;
-
-        verifyAccessToken(token)
-          .then(identity => {
-            // Cheap early rejection; the connection handler enforces the cap
-            // authoritatively when it registers the socket.
-            if (this.rateLimiter.isAtConnectionCap(identity.sub)) {
-              logger.warn('WebSocket connection rejected - per-user connection cap', {
-                sessionId,
-                authenticatedSub: identity.sub,
-              });
-              cb(false, 429, 'Too Many Connections');
-              return;
-            }
-
-            // Stash the verified identity on the request for the connection
-            // handler (ws passes the same req object through to 'connection').
-            (info.req as { auth?: AuthenticatedIdentity }).auth = identity;
-            logger.info('WebSocket connection approved', {
-              sessionId,
-              authenticatedSub: identity.sub,
-            });
-            cb(true);
-          })
-          .catch(error => {
-            logger.warn('WebSocket connection rejected - invalid token', {
-              sessionId,
-              reason: error instanceof Error ? error.message : 'unknown',
-            });
-            cb(false, 1008, 'Unauthorized');
-          });
       },
     });
 
     this.setupEventHandlers();
     logger.info('WebSocket server initialized on HTTP server');
+  }
+
+  private verifyHandshake(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    info: any,
+    cb: VerifyClientCallback
+  ): void {
+    // Limit handshake attempts per client IP before any token
+    // verification work, mirroring the REST limiter running ahead of auth.
+    const clientIp = getClientIp(info.req, TRUST_PROXY_HOPS);
+    if (!this.rateLimiter.allowHandshake(clientIp)) {
+      logger.warn('WebSocket connection rejected - handshake rate limit', { clientIp });
+      cb(false, 429, 'Too Many Requests', {
+        'Retry-After': String(this.rateLimiter.handshakeRetryAfterSeconds(clientIp)),
+      });
+      return;
+    }
+
+    const url = parseUrl(info.req.url || '', true);
+    const sessionId = this.extractSessionIdFromUrl(url.pathname || '');
+
+    if (!sessionId) {
+      logger.warn('WebSocket connection rejected - no session ID', {
+        url: info.req.url,
+        pathname: url.pathname,
+        origin: info.origin,
+      });
+      cb(false, 400, 'Invalid session ID');
+      return;
+    }
+
+    // Fail-closed authentication: the browser WebSocket API cannot set an
+    // Authorization header, so the access token is passed as the `token`
+    // query parameter (or `access_token`). verifyAccessToken enforces the
+    // same Cognito verification and AUTH_DISABLED policy as the HTTP API.
+    const token =
+      (typeof url.query.token === 'string' && url.query.token) ||
+      (typeof url.query.access_token === 'string' && url.query.access_token) ||
+      null;
+
+    // Promise.resolve().then() turns any synchronous throw from the
+    // verifier into a rejection, so every failure lands in the 401 below.
+    Promise.resolve()
+      .then(() => verifyAccessToken(token))
+      .then(
+        identity => {
+          // Cheap early rejection; the connection handler enforces the cap
+          // authoritatively when it registers the socket.
+          if (this.rateLimiter.isAtConnectionCap(identity.sub)) {
+            logger.warn('WebSocket connection rejected - per-user connection cap', {
+              sessionId,
+              authenticatedSub: identity.sub,
+            });
+            cb(false, 429, 'Too Many Connections');
+            return;
+          }
+
+          // Stash the verified identity on the request for the connection
+          // handler (ws passes the same req object through to 'connection').
+          (info.req as { auth?: AuthenticatedIdentity }).auth = identity;
+          logger.info('WebSocket connection approved', {
+            sessionId,
+            authenticatedSub: identity.sub,
+          });
+          cb(true);
+        },
+        // Only a verification failure reaches this handler (it is the second
+        // argument to then, not a trailing catch), so a throw after cb(true)
+        // can never answer the same handshake twice.
+        error => {
+          logger.warn('WebSocket connection rejected - invalid token', {
+            sessionId,
+            reason: error instanceof Error ? error.message : 'unknown',
+          });
+          cb(false, 401, 'Unauthorized', { 'WWW-Authenticate': 'Bearer' });
+        }
+      )
+      .catch(error => {
+        logger.error('Error completing WebSocket handshake', {
+          sessionId,
+          reason: error instanceof Error ? error.message : 'unknown',
+        });
+      });
   }
 
   private setupEventHandlers(): void {

@@ -29,7 +29,11 @@ dotenv.config();
 
 const app = express();
 const logger = createLogger();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
+// Loopback by default so a local `npm run dev` is not reachable from other
+// machines. The container image sets HOST=0.0.0.0, where the task's security
+// group (ALB-only ingress) is the network boundary.
+const HOST = process.env.HOST || '127.0.0.1';
 
 // Behind CloudFront -> ALB there are two trusted proxy hops in front of the
 // app. Set a bounded hop count (NOT `true`) so Express derives the real client
@@ -150,8 +154,8 @@ app.use('/api/voices', createVoiceRoutes(sessionService));
 app.use(errorHandler);
 
 // Start server
-const server = app.listen(PORT, () => {
-  logger.info(`AI Multi-Persona Conversation Ochestrator Backend started on port ${PORT}`);
+const server = app.listen(PORT, HOST, () => {
+  logger.info(`AI Multi-Persona Conversation Ochestrator Backend started on ${HOST}:${PORT}`);
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 

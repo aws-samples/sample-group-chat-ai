@@ -15,6 +15,25 @@ import { addNagSuppressions } from './nag-suppressions';
 import { Construct } from 'constructs';
 import { getConfigLoader } from '../bin/config-loader';
 
+/**
+ * Read a boolean CDK context value. `-c key=true` arrives as the string
+ * "true", while cdk.json can hold a real boolean, so accept both. Anything
+ * other than true/false fails synth rather than silently using the default.
+ */
+function parseBooleanContext(scope: Construct, key: string, defaultValue: boolean): boolean {
+  const raw: unknown = scope.node.tryGetContext(key);
+  if (raw === undefined || raw === null || raw === '') {
+    return defaultValue;
+  }
+  if (raw === true || raw === 'true') {
+    return true;
+  }
+  if (raw === false || raw === 'false') {
+    return false;
+  }
+  throw new Error(`CDK context "${key}" must be true or false, got: ${JSON.stringify(raw)}`);
+}
+
 export interface GroupChatAIStackProps extends cdk.StackProps {
   environment: string;
   frontendDomain?: string;
@@ -171,10 +190,17 @@ export class GroupChatAIStack extends cdk.Stack {
       maxAge: 3000,
     });
 
+    // Self sign-up is OFF by default: only an administrator can create users,
+    // so a public deployment is not open to anyone who finds the URL. Turn it
+    // on with `cdk deploy -c selfSignUpEnabled=true` (or set it under
+    // "context" in cdk.json). The Cognito hosted login page shows its "Sign up"
+    // link only when this is enabled.
+    const selfSignUpEnabled = parseBooleanContext(this, 'selfSignUpEnabled', false);
+
     // Create Cognito User Pool
     this.userPool = new cognito.UserPool(this, 'GroupChatAIUserPool', {
       userPoolName: `group-chat-ai-${environment}`,
-      selfSignUpEnabled: true,
+      selfSignUpEnabled,
       signInAliases: {
         email: true,
       },

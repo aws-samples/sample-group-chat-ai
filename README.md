@@ -304,6 +304,29 @@ cd infrastructure
 npm run deploy:dev # replace :dev with staging or prod for those environments
 ```
 
+### User accounts and self sign-up
+
+By default the Cognito user pool does not allow self sign-up. Only an administrator can create users, and the hosted login page shows no "Sign up" link. That keeps a deployment from being open to anyone who finds its URL.
+
+To create a user, take the `UserPoolId` stack output and run the command below. Cognito emails the user a temporary password, which they change at first sign-in.
+
+```bash
+aws cognito-idp admin-create-user \
+  --user-pool-id <UserPoolId> \
+  --username user@example.com \
+  --user-attributes Name=email,Value=user@example.com Name=email_verified,Value=true \
+    Name=given_name,Value=Jane Name=family_name,Value=Doe
+```
+
+To let anyone with the URL register their own account, enable self sign-up with the `selfSignUpEnabled` CDK context flag. You can set it per deploy:
+
+```bash
+cd infrastructure
+npm run deploy:dev -- -c selfSignUpEnabled=true
+```
+
+Or set `"selfSignUpEnabled": true` under `"context"` in `infrastructure/cdk.json`. Deploying again without the flag turns self sign-up back off. Existing users keep their accounts.
+
 ## ⚠️ Deployment Region Warning!
 By default, the Routing Model for Bedrock is Anthropic Claude Haiku 5.5 (`us.anthropic.claude-haiku-5-5`). The Persona Model leverages Anthropic Claude Sonnet 5.5 (`us.anthropic.claude-sonnet-5-5`). Please ensure you are deploying to a region that supports both models, or configure alternative models.
 

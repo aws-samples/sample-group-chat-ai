@@ -10,6 +10,7 @@ import * as cr from 'aws-cdk-lib/custom-resources';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import { Platform } from 'aws-cdk-lib/aws-ecr-assets';
 import { addNagSuppressions } from './nag-suppressions';
 import { Construct } from 'constructs';
 import { getConfigLoader } from '../bin/config-loader';
@@ -565,9 +566,18 @@ export class GroupChatAIStack extends cdk.Stack {
       memoryLimitMiB: 2048,
       desiredCount: 1,
       minHealthyPercent: 50,
+      // The task runs on x86_64 Fargate. State it explicitly and build the image
+      // for the same architecture below, so a deploy from an ARM machine (Apple
+      // silicon, Graviton) does not ship an arm64 image that crashes on start
+      // with "exec format error".
+      runtimePlatform: {
+        cpuArchitecture: ecs.CpuArchitecture.X86_64,
+        operatingSystemFamily: ecs.OperatingSystemFamily.LINUX,
+      },
       taskImageOptions: {
         image: ecs.ContainerImage.fromAsset('..', {
           file: 'backend/Dockerfile',
+          platform: Platform.LINUX_AMD64,
           exclude: [
             'cdk.out',
             'node_modules',

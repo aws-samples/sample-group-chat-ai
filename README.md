@@ -44,7 +44,8 @@ Session Manager ← PersonaAgent ← LLM Interface ← Language Models (Bedrock/
 
 - Node.js 20+ 
 - npm 8+
-- Docker (optional, for containerization)
+- Docker (optional for local development; required for AWS deployment, which builds the backend container image)
+  - The backend runs on x86_64 (`linux/amd64`) Fargate, and the CDK stack builds its image for that platform whatever machine you deploy from. On an ARM machine (Apple silicon, Graviton), Docker must be able to build amd64 images. Docker Desktop can do this out of the box. On Linux, install QEMU emulation once with `docker run --privileged --rm tonistiigi/binfmt --install amd64`. The cross-architecture build is slower than a native one.
 - AWS CLI (for deployment)
 
 ### Installation

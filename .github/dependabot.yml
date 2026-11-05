@@ -8,6 +8,14 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    ignore:
+      # ESLint majors break the flat-config plugin chain (eslint-plugin-react
+      # did not support eslint 10 when #46 was closed). Take majors manually
+      # once the plugins catch up; minor/patch updates still flow.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@eslint/*"
+        update-types: ["version-update:semver-major"]
     groups:
       # Collapse low-risk dev-tooling bumps into one PR to reduce noise.
       dev-dependencies:

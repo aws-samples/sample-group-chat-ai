@@ -35,6 +35,11 @@ RUN chown -R appuser:appuser /app
 # Switch to non-root user
 USER appuser
 
+# Listen on all interfaces inside the container so the load balancer can reach
+# the task. Exposure is decided by the ECS security group (ALB-only ingress)
+# or, locally, by the host side of the port mapping (see docker:run).
+ENV HOST=0.0.0.0
+
 # Expose port
 EXPOSE 3000
 

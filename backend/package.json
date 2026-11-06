@@ -22,7 +22,7 @@
     "docker:run": "docker run -p 127.0.0.1:3000:3000 group-chat-ai-backend"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "0.133.0",
+    "@anthropic-ai/sdk": "1.4.0",
     "@aws-sdk/client-bedrock-runtime": "^3.1147.0",
     "@aws-sdk/client-dynamodb": "^3.1147.0",
     "@aws-sdk/client-polly": "^3.1147.0",

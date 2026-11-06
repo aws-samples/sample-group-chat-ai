@@ -43,7 +43,7 @@
     "express": "^5.1.0",
     "express-rate-limit": "^8.7.3",
     "fast-xml-parser": "^5.7.0",
-    "helmet": "6.0.0",
+    "helmet": "8.3.0",
     "jimp": "^0.22.12",
     "joi": "^18.3.1",
     "jszip": "^3.10.1",

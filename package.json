@@ -85,6 +85,22 @@
     },
     "swagger-jsdoc": {
       "glob": "^14.0.2"
+    },
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "11.0.4"
+    },
+    "test-exclude": {
+      "glob": "14.0.3",
+      "minimatch": "11.0.4"
+    },
+    "@jest/reporters": {
+      "glob": "14.0.3"
+    },
+    "jest-config": {
+      "glob": "14.0.3"
+    },
+    "jest-runtime": {
+      "glob": "14.0.3"
     }
   },
   "packageManager": "npm@10.9.9"

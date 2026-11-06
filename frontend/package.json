@@ -30,7 +30,7 @@
     "semgrep:json": "cd .. && source .venv/bin/activate && semgrep --config=semgrep.yml --json frontend/src/"
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.1147.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.1161.0",
     "@cloudscape-design/components": "^3.0.1081",
     "@cloudscape-design/design-tokens": "3.0.0",
     "@cloudscape-design/global-styles": "1.0.71",

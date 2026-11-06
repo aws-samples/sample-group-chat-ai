@@ -3,7 +3,7 @@
 
 import { FileChunk } from '@group-chat-ai/shared';
 import { createLogger } from '../config/logger';
-import pdf from 'pdf-parse';
+import { PDFParse } from 'pdf-parse';
 import ExcelJS from 'exceljs';
 import JSZip from 'jszip';
 import { XMLParser } from 'fast-xml-parser';
@@ -94,8 +94,15 @@ export class FileProcessingService {
    */
   private async extractPdfText(buffer: Buffer): Promise<string> {
     try {
-      const data = await pdf(buffer);
-      return data.text;
+      // pdf-parse v2: class-based API. Copy into a plain Uint8Array (v2's types
+      // reject Node's Buffer) and always release the parser's pdf.js resources.
+      const parser = new PDFParse({ data: new Uint8Array(buffer) });
+      try {
+        const result = await parser.getText();
+        return result.text;
+      } finally {
+        await parser.destroy();
+      }
     } catch (error) {
       logger.error('Error extracting PDF text', {
         error: error instanceof Error ? error.message : String(error),

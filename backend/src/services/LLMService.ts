@@ -1524,19 +1524,20 @@ Please analyze this image in the context of your role and provide relevant feedb
     prompt: string, 
     config: { model: string; temperature: number; maxTokens: number }
   ): Promise<string> {
-    const completion = await this.anthropicClient!.completions.create({
+    // SDK 1.x removed the legacy Text Completions API; use the Messages API.
+    const message = await this.anthropicClient!.messages.create({
       model: config.model,
-      prompt: `\n\nHuman: ${prompt}\n\nAssistant:`,
-      temperature: config.temperature,
-      max_tokens_to_sample: config.maxTokens,
-      stop_sequences: ['\n\nHuman:'],
+      max_tokens: config.maxTokens,
+      ...temperatureFor(config.model, config.temperature),
+      messages: [{ role: 'user', content: prompt }],
     });
 
-    if (!completion.completion) {
+    const response = extractAnthropicText(message);
+    if (!response) {
       throw new Error('No response content received from Anthropic');
     }
 
-    return completion.completion.trim();
+    return response.trim();
   }
 
   private async callOllamaSimple(

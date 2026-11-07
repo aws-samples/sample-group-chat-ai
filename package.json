@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "@types/jest": "30.0.0",
-    "@types/node": "20.0.0",
+    "@types/node": "26.6.6",
     "@typescript-eslint/eslint-plugin": "8.72.1",
     "@typescript-eslint/parser": "8.72.1",
     "eslint": "9.34.0",
@@ -75,7 +75,7 @@
   "author": "Your Organization",
   "license": "MIT",
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.1147.0"
+    "@aws-sdk/client-bedrock-runtime": "^3.1164.0"
   },
   "overrides": {
     "decode-uri-component": "^0.5.0",

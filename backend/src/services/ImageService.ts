@@ -16,7 +16,7 @@ import {
 } from '@group-chat-ai/shared';
 import { createLogger } from '../config/logger';
 import { v4 as uuidv4 } from 'uuid';
-import Jimp from 'jimp';
+import { Jimp, JimpMime } from 'jimp';
 
 const logger = createLogger();
 
@@ -314,14 +314,14 @@ export class ImageService {
       const image = await Jimp.read(imageBuffer);
 
       // Validate that image loaded successfully
-      if (!image || image.getWidth() === 0 || image.getHeight() === 0) {
+      if (!image || image.width === 0 || image.height === 0) {
         throw new ValidationException('Invalid image format');
       }
 
       // Create thumbnail for UI display (max 200x200)
       const thumbnail = image.clone();
-      thumbnail.scaleToFit(200, 200);
-      const thumbnailBuffer = await thumbnail.quality(80).getBufferAsync(Jimp.MIME_JPEG);
+      thumbnail.scaleToFit({ w: 200, h: 200 });
+      const thumbnailBuffer = await thumbnail.getBuffer(JimpMime.jpeg, { quality: 80 });
 
       // Convert to base64 for storage and LLM processing
       const base64Data = imageBuffer.toString('base64');
@@ -353,9 +353,9 @@ export class ImageService {
 
       logger.info('Image processed successfully', {
         imageId: uploadSession.imageId,
-        format: image.getMIME(),
-        width: image.getWidth(),
-        height: image.getHeight(),
+        format: image.mime,
+        width: image.width,
+        height: image.height,
         thumbnailSize: thumbnailBuffer.length,
       });
 

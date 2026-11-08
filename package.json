@@ -101,6 +101,9 @@
     },
     "jest-runtime": {
       "glob": "14.0.3"
+    },
+    "jimp": {
+      "zod": "4.6.7"
     }
   },
   "packageManager": "npm@10.9.9"

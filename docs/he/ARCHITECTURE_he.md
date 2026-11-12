@@ -92,7 +92,7 @@ Group Chat AI היא פלטפורמת AI שיחה מתקדמת בזמן אמת �
 ### 4. שירותי קצה אחורי (ECS Fargate)
 
 #### **Express.js Application Server**
-- **זמן ריצה**: Node.js 20 עם TypeScript
+- **זמן ריצה**: Node.js 26 עם TypeScript
 - **ארכיטקטורה**: עיצוב מוכוון מיקרו-שירותים
 - **רכיבים מרכזיים**:
   - נקודות קצה REST API לניהול סשן
@@ -238,7 +238,7 @@ User Input → Content Analysis → Persona Selection → Context Building → L
 - **זמן אמת**: WebSocket API
 
 ### קצה אחורי
-- **זמן ריצה**: Node.js 20
+- **זמן ריצה**: Node.js 26
 - **Framework**: Express.js
 - **שפה**: TypeScript
 - **WebSocket**: ספריית ws

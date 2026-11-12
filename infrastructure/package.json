@@ -31,6 +31,6 @@
     "constructs": "^10.0.5"
   },
   "devDependencies": {
-    "aws-cdk": "2.1147.0"
+    "aws-cdk": "2.1148.1"
   }
 }

@@ -93,7 +93,7 @@
   ### 4. Backend-сервисы (ECS Fargate)  
     
   #### **Express.js Application Server**  
-  - **Среда выполнения**: Node.js 20 с TypeScript  
+  - **Среда выполнения**: Node.js 26 с TypeScript  
   - **Архитектура**: Микросервисно-ориентированный дизайн  
   - **Основные компоненты**:  
     - REST API-эндпоинты для управления сессиями  
@@ -239,7 +239,7 @@
   - **Реальное время**: WebSocket API  
     
   ### Backend  
-  - **Среда выполнения**: Node.js 20  
+  - **Среда выполнения**: Node.js 26  
   - **Фреймворк**: Express.js  
   - **Язык**: TypeScript  
   - **WebSocket**: библиотека ws  

@@ -5,7 +5,6 @@
 
 // Export all personas
 export * from './personas';
-export { PERSONA_DEFINITIONS, SharedPersonaDefinition, getAllPersonaIds, getPersonaById } from './personas'
 
 // Export all types
 export * from './types';

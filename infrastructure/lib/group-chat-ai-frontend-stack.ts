@@ -217,7 +217,7 @@ export class GroupChatAIFrontendStack extends cdk.Stack {
       sources: [
         s3deploy.Source.asset('..', {
           bundling: {
-            image: cdk.DockerImage.fromRegistry('node:20-alpine'),
+            image: cdk.DockerImage.fromRegistry('node:22-alpine'),
             local: {
               tryBundle(outputDir: string, options: cdk.BundlingOptions): boolean {
                 try {

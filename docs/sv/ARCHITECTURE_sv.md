@@ -92,7 +92,7 @@ Group Chat AI är en sofistikerad realtids-AI-plattform för konversationer som 
 ### 4. Backend-tjänster (ECS Fargate)
 
 #### **Express.js Application Server**
-- **Runtime**: Node.js 20 med TypeScript
+- **Runtime**: Node.js 22 med TypeScript
 - **Arkitektur**: Mikrotjänstorienterad design
 - **Kärnkomponenter**:
   - REST API-endpoints för sessionshantering
@@ -238,7 +238,7 @@ Användarinmatning → Innehållsanalys → Persona-val → Kontextbyggande → 
 - **Realtid**: WebSocket API
 
 ### Backend
-- **Runtime**: Node.js 20
+- **Runtime**: Node.js 22
 - **Ramverk**: Express.js
 - **Språk**: TypeScript
 - **WebSocket**: ws-bibliotek

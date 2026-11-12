@@ -40,7 +40,7 @@ Session Manager ← PersonaAgent ← LLM Interface ← Language Models (Bedrock/
 
 ### Voraussetzungen
 
-- Node.js 20+ 
+- Node.js 22+ 
 - npm 8+
 - Docker (optional, für Containerisierung)
 - AWS CLI (für Deployment)

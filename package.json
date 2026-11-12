@@ -54,7 +54,7 @@
     "ts-jest": "^29.4.15"
   },
   "engines": {
-    "node": ">=22.0.0",
+    "node": ">=24.0.0",
     "npm": ">=8.0.0"
   },
   "repository": {
@@ -106,5 +106,5 @@
       "zod": "4.6.7"
     }
   },
-  "packageManager": "npm@10.9.9"
+  "packageManager": "npm@11.19.1"
 }

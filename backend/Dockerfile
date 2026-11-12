@@ -1,7 +1,7 @@
 # Copyright 2025 Amazon.com, Inc. or its affiliates.
 # SPDX-License-Identifier: MIT-0
 
-FROM node:22-slim
+FROM node:24-slim
 
 # Install curl for health check
 RUN apt-get update && apt-get install -y --no-install-recommends curl && apt-get clean && rm -rf /var/lib/apt/lists/*

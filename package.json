@@ -106,5 +106,5 @@
       "zod": "4.6.7"
     }
   },
-  "packageManager": "npm@11.19.1"
+  "packageManager": "npm@11.20.0"
 }

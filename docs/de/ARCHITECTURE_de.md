@@ -92,7 +92,7 @@ Group Chat AI ist eine hochentwickelte Echtzeit-Konversations-KI-Plattform, die 
 ### 4. Backend-Services (ECS Fargate)
 
 #### **Express.js Application Server**
-- **Runtime**: Node.js 24 mit TypeScript
+- **Runtime**: Node.js 26 mit TypeScript
 - **Architektur**: Microservices-orientiertes Design
 - **Kernkomponenten**:
   - REST-API-Endpunkte für Session-Management
@@ -238,7 +238,7 @@ Benutzereingabe → Inhaltsanalyse → Persona-Auswahl → Kontext-Aufbau → LL
 - **Echtzeit**: WebSocket API
 
 ### Backend
-- **Runtime**: Node.js 24
+- **Runtime**: Node.js 26
 - **Framework**: Express.js
 - **Sprache**: TypeScript
 - **WebSocket**: ws library

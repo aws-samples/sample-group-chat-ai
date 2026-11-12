@@ -93,7 +93,7 @@
   ### 4. Backend Services (ECS Fargate)  
     
   #### **Express.js Application Server**  
-  - **Runtime**: Node.js 24 with TypeScript  
+  - **Runtime**: Node.js 26 with TypeScript  
   - **Architecture**: Microservices-oriented design  
   - **Core Components**:  
     - REST API endpoints for session management  
@@ -239,7 +239,7 @@
   - **Real-time**: WebSocket API  
     
   ### Backend  
-  - **Runtime**: Node.js 24  
+  - **Runtime**: Node.js 26  
   - **Framework**: Express.js  
   - **Language**: TypeScript  
   - **WebSocket**: ws library  

@@ -92,7 +92,7 @@ Group Chat AI 是一个复杂的实时对话 AI 平台，使用户能够与多�
 ### 4. 后端服务（ECS Fargate）
 
 #### **Express.js 应用服务器**
-- **运行时**：Node.js 24 with TypeScript
+- **运行时**：Node.js 26 with TypeScript
 - **架构**：面向微服务的设计
 - **核心组件**：
   - 用于会话管理的 REST API 端点
@@ -238,7 +238,7 @@ Group Chat AI 是一个复杂的实时对话 AI 平台，使用户能够与多�
 - **实时**：WebSocket API
 
 ### 后端
-- **运行时**：Node.js 24
+- **运行时**：Node.js 26
 - **框架**：Express.js
 - **语言**：TypeScript
 - **WebSocket**：ws 库

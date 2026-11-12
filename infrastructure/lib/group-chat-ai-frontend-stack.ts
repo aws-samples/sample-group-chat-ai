@@ -217,7 +217,7 @@ export class GroupChatAIFrontendStack extends cdk.Stack {
       sources: [
         s3deploy.Source.asset('..', {
           bundling: {
-            image: cdk.DockerImage.fromRegistry('node:24-alpine'),
+            image: cdk.DockerImage.fromRegistry('node:26-alpine'),
             local: {
               tryBundle(outputDir: string, options: cdk.BundlingOptions): boolean {
                 try {
@@ -506,7 +506,7 @@ export class GroupChatAIFrontendStack extends cdk.Stack {
       },
       {
         id: 'AwsSolutions-L1',
-        reason: 'Lambda function uses NODEJS_24_X, the Node.js version the rest of this stack runs on'
+        reason: 'Lambda function uses NODEJS_24_X, the latest generally available Lambda Node.js runtime (nodejs26.x is in public preview)'
       }
     ]);
 
@@ -687,7 +687,7 @@ export class GroupChatAIFrontendStack extends cdk.Stack {
       },
       {
         id: 'AwsSolutions-L1',
-        reason: 'Lambda function uses NODEJS_24_X, the Node.js version the rest of this stack runs on'
+        reason: 'Lambda function uses NODEJS_24_X, the latest generally available Lambda Node.js runtime (nodejs26.x is in public preview)'
       }
     ]);
 

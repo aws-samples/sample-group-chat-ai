@@ -5,7 +5,7 @@ The backend service for Group Chat AI, an AI-powered presentation practice platf
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 22+
+- Node.js 24+
 - npm 8+
 
 ### Installation

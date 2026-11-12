@@ -92,7 +92,7 @@ Group Chat AI هي منصة ذكاء اصطناعي محادثة متطورة ف
 ### 4. الخدمات الخلفية (ECS Fargate)
 
 #### **Express.js Application Server**
-- **وقت التشغيل**: Node.js 22 مع TypeScript
+- **وقت التشغيل**: Node.js 24 مع TypeScript
 - **المعمارية**: تصميم موجه للخدمات المصغرة
 - **المكونات الأساسية**:
   - نقاط نهاية REST API لإدارة الجلسات
@@ -238,7 +238,7 @@ User Input → Content Analysis → Persona Selection → Context Building → L
 - **الوقت الفعلي**: WebSocket API
 
 ### الخلفية
-- **وقت التشغيل**: Node.js 22
+- **وقت التشغيل**: Node.js 24
 - **الإطار**: Express.js
 - **اللغة**: TypeScript
 - **WebSocket**: مكتبة ws

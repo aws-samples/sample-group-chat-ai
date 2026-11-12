@@ -42,7 +42,7 @@ Session Manager ← PersonaAgent ← LLM Interface ← Language Models (Bedrock/
 
 ### 前置要求
 
-- Node.js 22+ 
+- Node.js 24+ 
 - npm 8+
 - Docker（可选，用于容器化）
 - AWS CLI（用于部署）

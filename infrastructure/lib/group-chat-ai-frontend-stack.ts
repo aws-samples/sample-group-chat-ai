@@ -217,7 +217,7 @@ export class GroupChatAIFrontendStack extends cdk.Stack {
       sources: [
         s3deploy.Source.asset('..', {
           bundling: {
-            image: cdk.DockerImage.fromRegistry('node:20-alpine'),
+            image: cdk.DockerImage.fromRegistry('node:26-alpine'),
             local: {
               tryBundle(outputDir: string, options: cdk.BundlingOptions): boolean {
                 try {
@@ -348,7 +348,7 @@ export class GroupChatAIFrontendStack extends cdk.Stack {
 
     // Create custom resource to generate and deploy config.json
     const configJsonLambda = new lambda.Function(this, 'ConfigJsonFunction', {
-      runtime: lambda.Runtime.NODEJS_20_X,
+      runtime: lambda.Runtime.NODEJS_24_X,
       handler: 'index.handler',
       code: lambda.Code.fromInline(`
         const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
@@ -506,7 +506,7 @@ export class GroupChatAIFrontendStack extends cdk.Stack {
       },
       {
         id: 'AwsSolutions-L1',
-        reason: 'Lambda function uses NODEJS_20_X which is the latest available runtime version'
+        reason: 'Lambda function uses NODEJS_24_X, the latest generally available Lambda Node.js runtime (nodejs26.x is in public preview)'
       }
     ]);
 
@@ -527,7 +527,7 @@ export class GroupChatAIFrontendStack extends cdk.Stack {
 
     // Create custom resource to update Cognito User Pool Client with CloudFront URLs
     const updateCognitoLambda = new lambda.Function(this, 'UpdateCognitoFunction', {
-      runtime: lambda.Runtime.NODEJS_20_X,
+      runtime: lambda.Runtime.NODEJS_24_X,
       handler: 'index.handler',
       code: lambda.Code.fromInline(`
         const { SSMClient, GetParameterCommand } = require('@aws-sdk/client-ssm');
@@ -687,7 +687,7 @@ export class GroupChatAIFrontendStack extends cdk.Stack {
       },
       {
         id: 'AwsSolutions-L1',
-        reason: 'Lambda function uses NODEJS_20_X which is the latest available runtime version'
+        reason: 'Lambda function uses NODEJS_24_X, the latest generally available Lambda Node.js runtime (nodejs26.x is in public preview)'
       }
     ]);
 

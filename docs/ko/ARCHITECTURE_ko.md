@@ -92,7 +92,7 @@ Group Chat AI는 사용자가 여러 AI 페르소나와 협업적 토론에 참�
 ### 4. 백엔드 서비스 (ECS Fargate)
 
 #### **Express.js Application Server**
-- **런타임**: TypeScript를 사용한 Node.js 20
+- **런타임**: TypeScript를 사용한 Node.js 26
 - **아키텍처**: 마이크로서비스 지향 설계
 - **핵심 구성 요소**:
   - 세션 관리를 위한 REST API 엔드포인트
@@ -238,7 +238,7 @@ User Input → Content Analysis → Persona Selection → Context Building → L
 - **실시간**: WebSocket API
 
 ### 백엔드
-- **런타임**: Node.js 20
+- **런타임**: Node.js 26
 - **프레임워크**: Express.js
 - **언어**: TypeScript
 - **WebSocket**: ws 라이브러리

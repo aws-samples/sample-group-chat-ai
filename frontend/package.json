@@ -32,7 +32,7 @@
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1164.0",
     "@cloudscape-design/components": "^3.0.1081",
-    "@cloudscape-design/design-tokens": "3.0.0",
+    "@cloudscape-design/design-tokens": "3.0.119",
     "@cloudscape-design/global-styles": "1.0.72",
     "@group-chat-ai/shared": "1.0.0",
     "@types/node": "^26.6.6",

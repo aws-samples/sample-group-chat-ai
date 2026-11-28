@@ -75,7 +75,7 @@
   "author": "Your Organization",
   "license": "MIT",
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.1164.0"
+    "@aws-sdk/client-bedrock-runtime": "^3.1178.0"
   },
   "overrides": {
     "decode-uri-component": "^0.5.0",
